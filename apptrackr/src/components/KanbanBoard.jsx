@@ -11,6 +11,14 @@ const COLUMN_COLORS = {
   Rejected: "border-t-red-400",
 }
 
+const STATUS_COLORS = {
+  Applied: "bg-blue-100 text-blue-600",
+  Screening: "bg-yellow-100 text-yellow-600",
+  Interview: "bg-purple-100 text-purple-600",
+  Offer: "bg-green-100 text-green-600",
+  Rejected: "bg-red-100 text-red-600",
+}
+
 function isOverdue(dateApplied) {
   if (!dateApplied) return false
   const applied = new Date(dateApplied)
@@ -45,8 +53,90 @@ function getRoleTag(role) {
   return { label: "Other", color: "bg-gray-100 text-gray-500" }
 }
 
+function ViewModal({ app, onClose, onEdit, darkMode }) {
+  const modalBg = darkMode ? "bg-gray-900" : "bg-white"
+  const titleColor = darkMode ? "text-white" : "text-gray-800"
+  const labelColor = darkMode ? "text-gray-400" : "text-gray-500"
+  const valueColor = darkMode ? "text-gray-200" : "text-gray-700"
+  const dividerColor = darkMode ? "border-gray-700" : "border-gray-100"
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className={`${modalBg} rounded-2xl shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto`}>
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className={`text-xl font-bold ${titleColor}`}>{app.company}</h2>
+            <p className={`text-sm mt-0.5 ${labelColor}`}>{app.role}</p>
+            {app.secondPreference && (
+              <p className={`text-xs mt-0.5 ${labelColor}`}>2nd: {app.secondPreference}</p>
+            )}
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-300 text-xl ml-4">✕</button>
+        </div>
+
+        <div className="mb-4">
+          <span className={`text-xs font-medium px-3 py-1 rounded-full ${STATUS_COLORS[app.status] || "bg-gray-100 text-gray-600"}`}>
+            {app.status}
+          </span>
+        </div>
+
+        <div>
+          {app.dateApplied && (
+            <div className={`py-3 border-b ${dividerColor}`}>
+              <p className={`text-xs font-medium mb-1 ${labelColor}`}>Date Applied</p>
+              <p className={`text-sm ${valueColor}`}>{app.dateApplied}</p>
+            </div>
+          )}
+          {app.interviewDate && (
+            <div className={`py-3 border-b ${dividerColor}`}>
+              <p className={`text-xs font-medium mb-1 ${labelColor}`}>Interview Date</p>
+              <p className={`text-sm ${valueColor}`}>{app.interviewDate}</p>
+            </div>
+          )}
+          {app.source && (
+            <div className={`py-3 border-b ${dividerColor}`}>
+              <p className={`text-xs font-medium mb-1 ${labelColor}`}>Source</p>
+              <p className={`text-sm ${valueColor}`}>{app.source}</p>
+            </div>
+          )}
+          {app.jobLink && (
+            <div className={`py-3 border-b ${dividerColor}`}>
+              <p className={`text-xs font-medium mb-1 ${labelColor}`}>Job Link</p>
+              <a href={app.jobLink} target="_blank" rel="noreferrer" className="text-sm text-blue-500 hover:underline break-all">
+                {app.jobLink}
+              </a>
+            </div>
+          )}
+          {app.notes && (
+            <div className={`py-3 ${dividerColor}`}>
+              <p className={`text-xs font-medium mb-1 ${labelColor}`}>Notes</p>
+              <p className={`text-sm ${valueColor}`}>{app.notes}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className={`flex-1 border text-sm font-medium py-2 rounded-lg ${darkMode ? "border-gray-700 text-gray-400 hover:bg-gray-800" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+          >
+            Close
+          </button>
+          <button
+            onClick={onEdit}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg"
+          >
+            Edit
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function KanbanBoard({ applications, updateStatus, updateApplication, deleteApplication, darkMode, filterStatus }) {
-  const [selectedApp, setSelectedApp] = useState(null)
+  const [viewingApp, setViewingApp] = useState(null)
+  const [editingApp, setEditingApp] = useState(null)
 
   const colBg = darkMode ? "bg-gray-800" : "bg-gray-50"
   const cardBg = darkMode ? "bg-gray-700 border-gray-600" : "bg-white border-gray-100"
@@ -75,7 +165,7 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
                 return (
                   <div
                     key={app.id}
-                    onClick={() => setSelectedApp(app)}
+                    onClick={() => setViewingApp(app)}
                     className={`${cardBg} rounded-lg p-3 shadow-sm border cursor-pointer hover:shadow-md transition-shadow`}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -118,6 +208,9 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
                     {app.interviewDate && (
                       <p className="text-xs text-purple-400 mt-1">🗓️ Interview: {app.interviewDate}</p>
                     )}
+                    {app.source && (
+                      <p className="text-xs text-gray-400 mt-1">🔗 {app.source}</p>
+                    )}
                     {app.notes && (
                       <p className="text-xs text-gray-400 mt-1 italic truncate">📝 {app.notes.slice(0, 50)}{app.notes.length > 50 ? "..." : ""}</p>
                     )}
@@ -132,14 +225,27 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
         })}
       </div>
 
-      {selectedApp && (
+      {viewingApp && !editingApp && (
+        <ViewModal
+          app={viewingApp}
+          darkMode={darkMode}
+          onClose={() => setViewingApp(null)}
+          onEdit={() => setEditingApp(viewingApp)}
+        />
+      )}
+
+      {editingApp && (
         <ApplicationModal
-          existingApp={selectedApp}
-          onClose={() => setSelectedApp(null)}
+          existingApp={editingApp}
+          onClose={() => {
+            setEditingApp(null)
+            setViewingApp(null)
+          }}
           darkMode={darkMode}
           onSave={(updated) => {
-            updateApplication({ ...selectedApp, ...updated })
-            setSelectedApp(null)
+            updateApplication({ ...editingApp, ...updated })
+            setEditingApp(null)
+            setViewingApp(null)
           }}
         />
       )}

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import KanbanBoard from "./components/KanbanBoard"
 import Stats from "./components/Stats"
 import ApplicationModal from "./components/ApplicationModal"
@@ -16,6 +16,10 @@ function App() {
   const [filterStatus, setFilterStatus] = useState("All")
   const [sortBy, setSortBy] = useState("newest")
 
+  useEffect(() => {
+    localStorage.setItem("darkMode", darkMode)
+  }, [darkMode])
+
   const STATUSES = ["All", "Applied", "Screening", "Interview", "Offer", "Rejected"]
 
   const filtered = applications
@@ -26,18 +30,10 @@ function App() {
       return matchesSearch
     })
     .sort((a, b) => {
-      if (sortBy === "newest") {
-        return new Date(b.dateApplied || 0) - new Date(a.dateApplied || 0)
-      }
-      if (sortBy === "oldest") {
-        return new Date(a.dateApplied || 0) - new Date(b.dateApplied || 0)
-      }
-      if (sortBy === "az") {
-        return a.company.localeCompare(b.company)
-      }
-      if (sortBy === "za") {
-        return b.company.localeCompare(a.company)
-      }
+      if (sortBy === "newest") return new Date(b.dateApplied || 0) - new Date(a.dateApplied || 0)
+      if (sortBy === "oldest") return new Date(a.dateApplied || 0) - new Date(b.dateApplied || 0)
+      if (sortBy === "az") return a.company.localeCompare(b.company)
+      if (sortBy === "za") return b.company.localeCompare(a.company)
       return 0
     })
 

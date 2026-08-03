@@ -4,7 +4,7 @@ const STATUSES = ["Applied", "Screening", "Interview", "Offer", "Rejected"]
 const SOURCES = ["LinkedIn", "Rozee.pk", "Indeed", "Company Website", "Email", "Referral"]
 
 function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
-  const [form, setForm] = useState(existingApp || {
+  const [form, setForm] = useState({
     company: "",
     role: "",
     secondPreference: "",
@@ -13,7 +13,8 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
     interviewDate: "",
     jobLink: "",
     source: "",
-    notes: ""
+    notes: "",
+    ...existingApp
   })
 
   const [errors, setErrors] = useState({})
@@ -121,7 +122,7 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
           </div>
 
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>First Preference (Role) *</label>
+            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>First Preference (Role)</label>
             <input
               name="role"
               value={form.role}
