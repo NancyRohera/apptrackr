@@ -5,12 +5,14 @@ import ApplicationModal from "./components/ApplicationModal"
 import SearchBar from "./components/SearchBar"
 import ExportButton from "./components/ExportButton"
 import Analytics from "./components/Analytics"
+import CalendarView from "./components/CalendarView"
 import useApplications from "./hooks/useApplications"
 
 function App() {
   const { applications, addApplication, updateApplication, deleteApplication, updateStatus } = useApplications()
   const [showModal, setShowModal] = useState(false)
   const [showAnalytics, setShowAnalytics] = useState(false)
+  const [showCalendar, setShowCalendar] = useState(false)
   const [search, setSearch] = useState("")
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("darkMode") === "true"
@@ -64,6 +66,12 @@ function App() {
               className="border border-gray-200 bg-white text-gray-600 text-sm font-medium px-4 py-2.5 rounded-lg shadow-sm"
             >
               📊 Analytics
+            </button>
+            <button
+              onClick={() => setShowCalendar(true)}
+              className="border border-gray-200 bg-white text-gray-600 text-sm font-medium px-4 py-2.5 rounded-lg shadow-sm"
+            >
+              📅 Calendar
             </button>
             <ExportButton applications={applications} />
             <button
@@ -122,6 +130,14 @@ function App() {
             applications={applications}
             darkMode={darkMode}
             onClose={() => setShowAnalytics(false)}
+          />
+        )}
+
+        {showCalendar && (
+          <CalendarView
+            applications={applications}
+            darkMode={darkMode}
+            onClose={() => setShowCalendar(false)}
           />
         )}
       </div>

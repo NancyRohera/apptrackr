@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import initialData from "../data/applications"
+import confetti from "canvas-confetti"
 
 function useApplications() {
   const [applications, setApplications] = useState(() => {
@@ -31,6 +32,14 @@ function useApplications() {
   }
 
   function updateStatus(id, newStatus) {
+    if (newStatus === "Offer") {
+      confetti({
+        particleCount: 200,
+        spread: 90,
+        origin: { y: 0.6 },
+        colors: ["#6366f1", "#34d399", "#f472b6", "#fbbf24", "#60a5fa"]
+      })
+    }
     setApplications(prev => prev.map(app => app.id === id ? { ...app, status: newStatus } : app))
   }
 

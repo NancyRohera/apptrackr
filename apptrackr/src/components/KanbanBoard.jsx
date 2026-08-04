@@ -134,9 +134,56 @@ function ViewModal({ app, onClose, onEdit, darkMode }) {
   )
 }
 
+function InterviewDateModal({ app, onConfirm, onSkip, darkMode }) {
+  const [date, setDate] = useState("")
+  const modalBg = darkMode ? "bg-gray-900" : "bg-white"
+  const titleColor = darkMode ? "text-white" : "text-gray-800"
+  const subColor = darkMode ? "text-gray-400" : "text-gray-500"
+  const inputClass = darkMode
+    ? "bg-gray-800 border-gray-700 text-white"
+    : "bg-white border-gray-200 text-gray-800"
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className={`${modalBg} rounded-2xl shadow-xl p-6 w-full max-w-sm`}>
+        <div className="text-center mb-5">
+          <p className="text-3xl mb-3">🗓️</p>
+          <h2 className={`text-lg font-bold ${titleColor}`}>Schedule Interview</h2>
+          <p className={`text-sm mt-1 ${subColor}`}>
+            When is your interview at <span className="font-medium">{app.company}</span>?
+          </p>
+        </div>
+
+        <input
+          type="date"
+          value={date}
+          onChange={e => setDate(e.target.value)}
+          className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 mb-4 ${inputClass}`}
+        />
+
+        <div className="flex gap-3">
+          <button
+            onClick={onSkip}
+            className={`flex-1 border text-sm font-medium py-2.5 rounded-xl ${darkMode ? "border-gray-700 text-gray-400 hover:bg-gray-800" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+          >
+            Skip for now
+          </button>
+          <button
+            onClick={() => onConfirm(date)}
+            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2.5 rounded-xl"
+          >
+            Save Date
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function KanbanBoard({ applications, updateStatus, updateApplication, deleteApplication, darkMode, filterStatus }) {
   const [viewingApp, setViewingApp] = useState(null)
   const [editingApp, setEditingApp] = useState(null)
+  const [interviewApp, setInterviewApp] = useState(null)
 
   const colBg = darkMode ? "bg-gray-800" : "bg-gray-50"
   const cardBg = darkMode ? "bg-gray-700 border-gray-600" : "bg-white border-gray-100"
@@ -192,7 +239,15 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
                     <select
                       value={app.status}
                       onClick={e => e.stopPropagation()}
-                      onChange={e => updateStatus(app.id, e.target.value)}
+                      onChange={e => {
+  const newStatus = e.target.value
+  if (newStatus === "Interview" && !app.interviewDate) {
+    setInterviewApp(app)
+    updateStatus(app.id, "Interview")
+  } else {
+    updateStatus(app.id, newStatus)
+  }
+}}
                       className={`text-xs rounded-md px-2 py-1 w-full cursor-pointer border ${selectBg}`}
                     >
                       {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -246,6 +301,20 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
             updateApplication({ ...editingApp, ...updated })
             setEditingApp(null)
             setViewingApp(null)
+          }}
+        />
+      )}
+
+      {interviewApp && (
+        <InterviewDateModal
+          app={interviewApp}
+          darkMode={darkMode}
+          onSkip={() => setInterviewApp(null)}
+          onConfirm={(date) => {
+            if (date) {
+              updateApplication({ ...interviewApp, status: "Interview", interviewDate: date })
+            }
+            setInterviewApp(null)
           }}
         />
       )}
