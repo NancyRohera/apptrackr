@@ -53,6 +53,16 @@ const applications = [
   { id: 52, company: "Patel Hospital", role: "IT Intern", status: "Applied", dateApplied: "", jobLink: "", notes: "Summer Internship" },
   { id: 53, company: "Sana Safinaz", role: "IT Support Intern", status: "Applied", dateApplied: "", jobLink: "", notes: "" },
   { id: 54, company: "360Signum", role: "LinkedIn Marketing Intern", status: "Applied", dateApplied: "", jobLink: "", notes: "" },
+  { id: 55, company: "Digisoft Transformation Solutions", role: "Project Management Intern", secondPreference: "", status: "Applied", dateApplied: "2026-08-09", interviewDate: "", interviewTime: "", jobLink: "https://www.linkedin.com/feed/update/urn:li:activity:7490715423127166977/", source: "LinkedIn", notes: "" },
+  { id: 56, company: "PTR", role: "Wordpress Intern", secondPreference: "", status: "Applied", dateApplied: "2026-08-06", interviewDate: "", interviewTime: "", jobLink: "https://www.linkedin.com/in/rubab67/", source: "LinkedIn", notes: "" },
+  { id: 57, company: "Arittek", role: "Java Intern (Software Dev)", secondPreference: "", status: "Applied", dateApplied: "2026-07-28", interviewDate: "", interviewTime: "", jobLink: "https://www.linkedin.com/posts/malihashakeelkhan_hiring-javaintern-karachijobs-share-7487457690458394624-Zrtg/", source: "LinkedIn", notes: "" },
+  { id: 58, company: "SpaceAI360", role: "AI Intern", secondPreference: "", status: "Applied", dateApplied: "2026-07-27", interviewDate: "", interviewTime: "", jobLink: "https://www.linkedin.com/posts/hiring-aiintern-artificialintelligence-share-7483781460903260160-Wi0h/", source: "LinkedIn", notes: "" },
+  { id: 59, company: "4orbits", role: "Internship", secondPreference: "", status: "Applied", dateApplied: "2026-07-27", interviewDate: "", interviewTime: "", jobLink: "https://www.linkedin.com/in/maryammamjad/recent-activity/all/", source: "LinkedIn", notes: "" },
+  { id: 60, company: "BOP (The Bank of Punjab)", role: "BOP Galaxy Management Associate Program 2026", secondPreference: "", status: "Applied", dateApplied: "2026-07-27", interviewDate: "", interviewTime: "", jobLink: "", source: "LinkedIn", notes: "" },
+  { id: 61, company: "Bank Al Habib", role: "QA", secondPreference: "Development", status: "Applied", dateApplied: "2026-07-21", interviewDate: "", interviewTime: "", jobLink: "https://www.mauqapakistan.com/2026/07/bank-al-habib-it-trainee-officer-program-2026-apply-now.html", source: "LinkedIn", notes: "" },
+  { id: 62, company: "MentorSol", role: "QA Intern", secondPreference: "", status: "Applied", dateApplied: "2026-07-14", interviewDate: "", interviewTime: "", jobLink: "https://www.linkedin.com/feed/update/urn:li:activity:7482320080928833536/", source: "LinkedIn", notes: "" },
+  { id: 63, company: "10Pearls", role: "QA (Automation + Manual) Intern", secondPreference: "Data Science", status: "Applied", dateApplied: "2026-07-07", interviewDate: "", interviewTime: "", jobLink: "", source: "LinkedIn", notes: "" },
+  { id: 64, company: "P@sha", role: "Project Coordinator Intern (Social Media)", secondPreference: "", status: "Applied", dateApplied: "2026-07-04", interviewDate: "", interviewTime: "", jobLink: "", source: "LinkedIn", notes: "" },
 ]
 
 export default applications
