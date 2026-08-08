@@ -1,12 +1,14 @@
 const mongoose = require("mongoose")
 
 const applicationSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   company: { type: String, required: true },
   role: { type: String, default: "" },
   secondPreference: { type: String, default: "" },
   status: { type: String, default: "Applied" },
   dateApplied: { type: String, default: "" },
   interviewDate: { type: String, default: "" },
+  interviewTime: { type: String, default: "" },
   jobLink: { type: String, default: "" },
   source: { type: String, default: "" },
   notes: { type: String, default: "" },

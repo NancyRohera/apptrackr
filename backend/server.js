@@ -17,6 +17,7 @@ mongoose.connect(process.env.MONGO_URI)
   .catch((err) => console.log("❌ MongoDB connection error:", err.message))
 
 // Routes
+app.use("/api/auth", require("./routes/auth"))
 app.use("/api/applications", require("./routes/applications"))
 
 app.get("/", (req, res) => {
