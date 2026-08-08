@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Calendar, dateFnsLocalizer } from "react-big-calendar"
 import { format, parse, startOfWeek, getDay } from "date-fns"
 import { enUS } from "date-fns/locale"
@@ -12,10 +13,16 @@ const localizer = dateFnsLocalizer({
 })
 
 function CalendarView({ applications, darkMode, onClose }) {
+  const [currentView, setCurrentView] = useState("month")
+  const [currentDate, setCurrentDate] = useState(new Date())
+
   const bg = darkMode ? "bg-gray-950" : "bg-slate-50"
   const cardBg = darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100"
   const titleColor = darkMode ? "text-white" : "text-gray-900"
   const subColor = darkMode ? "text-gray-400" : "text-gray-400"
+  const btnBase = darkMode
+    ? "border-gray-700 text-gray-400 hover:bg-gray-800 bg-gray-900"
+    : "border-gray-200 text-gray-500 hover:bg-gray-100 bg-white"
 
   const events = applications
     .filter(app => app.interviewDate)
@@ -26,12 +33,35 @@ function CalendarView({ applications, darkMode, onClose }) {
       resource: app,
     }))
 
+  function navigate(direction) {
+    const date = new Date(currentDate)
+    if (currentView === "month") {
+      date.setMonth(date.getMonth() + (direction === "next" ? 1 : -1))
+    } else if (currentView === "week") {
+      date.setDate(date.getDate() + (direction === "next" ? 7 : -7))
+    } else {
+      date.setMonth(date.getMonth() + (direction === "next" ? 1 : -1))
+    }
+    setCurrentDate(date)
+  }
+
+  function goToToday() {
+    setCurrentDate(new Date())
+  }
+
+  const label = currentView === "month"
+    ? format(currentDate, "MMMM yyyy")
+    : currentView === "week"
+    ? `Week of ${format(currentDate, "MMM d, yyyy")}`
+    : format(currentDate, "MMMM yyyy")
+
   return (
     <div className={`fixed inset-0 ${bg} z-50 overflow-y-auto`}>
       <style>{`
         .rbc-calendar { background: transparent !important; }
-        .rbc-header { 
-          background: ${darkMode ? "#111827" : "#f8fafc"} !important; 
+        .rbc-toolbar { display: none !important; }
+        .rbc-header {
+          background: ${darkMode ? "#111827" : "#f8fafc"} !important;
           color: ${darkMode ? "#e5e7eb" : "#374151"} !important;
           border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important;
           padding: 8px !important;
@@ -69,46 +99,27 @@ function CalendarView({ applications, darkMode, onClose }) {
           padding: 2px 6px !important;
         }
         .rbc-event:focus { outline: none !important; }
-        .rbc-show-more {
-          color: #6366f1 !important;
-          font-size: 11px !important;
-        }
-        .rbc-toolbar {
-          margin-bottom: 16px !important;
-        }
-        .rbc-toolbar button {
-          color: ${darkMode ? "#9ca3af" : "#6b7280"} !important;
-          border-color: ${darkMode ? "#374151" : "#e5e7eb"} !important;
-          background: ${darkMode ? "#111827" : "#ffffff"} !important;
-          border-radius: 8px !important;
-          font-size: 13px !important;
-          padding: 6px 12px !important;
-        }
-        .rbc-toolbar button:hover {
-          background: ${darkMode ? "#1f2937" : "#f3f4f6"} !important;
+        .rbc-show-more { color: #6366f1 !important; font-size: 11px !important; }
+        .rbc-month-row { border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important; }
+        .rbc-day-bg + .rbc-day-bg { border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important; }
+        .rbc-agenda-view table { color: ${darkMode ? "#e5e7eb" : "#374151"} !important; }
+        .rbc-agenda-date-cell, .rbc-agenda-time-cell, .rbc-agenda-event-cell {
+          background: ${darkMode ? "#0f172a" : "#ffffff"} !important;
           color: ${darkMode ? "#e5e7eb" : "#374151"} !important;
-        }
-        .rbc-toolbar button.rbc-active {
-          background: #6366f1 !important;
-          color: white !important;
-          border-color: #6366f1 !important;
-        }
-        .rbc-toolbar-label {
-          color: ${darkMode ? "#e5e7eb" : "#111827"} !important;
-          font-weight: 600 !important;
-          font-size: 16px !important;
-        }
-        .rbc-month-row {
           border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important;
         }
-        .rbc-day-bg + .rbc-day-bg {
-          border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important;
-        }
+        .rbc-agenda-empty { color: ${darkMode ? "#6b7280" : "#9ca3af"} !important; }
+        .rbc-week-view { border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important; }
+        .rbc-time-view { border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important; }
+        .rbc-time-header { background: ${darkMode ? "#111827" : "#f8fafc"} !important; }
+        .rbc-time-content { background: ${darkMode ? "#0f172a" : "#ffffff"} !important; }
+        .rbc-timeslot-group { border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important; }
+        .rbc-time-slot { color: ${darkMode ? "#6b7280" : "#9ca3af"} !important; }
       `}</style>
 
       <div className="max-w-5xl mx-auto px-6 py-8">
 
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className={`text-2xl font-bold ${titleColor}`}>Interview Calendar</h1>
             <p className={`text-sm mt-1 ${subColor}`}>
@@ -117,17 +128,53 @@ function CalendarView({ applications, darkMode, onClose }) {
           </div>
           <button
             onClick={onClose}
-            className={`text-sm px-4 py-2 rounded-xl border font-medium transition ${darkMode ? "border-gray-700 text-gray-400 hover:bg-gray-800" : "border-gray-200 text-gray-500 hover:bg-gray-100"}`}
+            className={`text-sm px-4 py-2 rounded-xl border font-medium transition ${btnBase}`}
           >
             ← Back
           </button>
+        </div>
+
+        {/* Custom toolbar */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex gap-2">
+            <button
+              onClick={goToToday}
+              className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${btnBase}`}
+            >
+              Today
+            </button>
+            <button
+              onClick={() => navigate("prev")}
+              className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${btnBase}`}
+            >
+              ←
+            </button>
+            <button
+              onClick={() => navigate("next")}
+              className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${btnBase}`}
+            >
+              →
+            </button>
+          </div>
+          <p className={`font-semibold text-base ${titleColor}`}>{label}</p>
+          <div className="flex gap-2">
+            {["month", "week", "agenda"].map(v => (
+              <button
+                key={v}
+                onClick={() => setCurrentView(v)}
+                className={`text-sm px-3 py-1.5 rounded-lg capitalize border font-medium transition ${currentView === v ? "bg-indigo-600 text-white border-indigo-600" : btnBase}`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
         </div>
 
         {events.length === 0 ? (
           <div className={`rounded-2xl border p-12 text-center ${cardBg}`}>
             <p className="text-4xl mb-4">📅</p>
             <p className={`font-semibold text-lg ${titleColor}`}>No interviews scheduled yet</p>
-            <p className={`text-sm mt-2 ${subColor}`}>When you add an interview date to any application it will show up here</p>
+            <p className={`text-sm mt-2 ${subColor}`}>Add an interview date to any application and it will show up here</p>
           </div>
         ) : (
           <div className={`rounded-2xl border p-6 ${cardBg}`}>
@@ -137,6 +184,10 @@ function CalendarView({ applications, darkMode, onClose }) {
               startAccessor="start"
               endAccessor="end"
               style={{ height: 600 }}
+              view={currentView}
+              date={currentDate}
+              onView={setCurrentView}
+              onNavigate={setCurrentDate}
               views={["month", "week", "agenda"]}
               eventPropGetter={() => ({
                 style: {

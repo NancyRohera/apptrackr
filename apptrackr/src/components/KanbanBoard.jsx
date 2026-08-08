@@ -29,27 +29,13 @@ function isOverdue(dateApplied) {
 
 function getRoleTag(role) {
   const r = role.toLowerCase()
-  if (r.includes("pm") || r.includes("project manager") || r.includes("project management") || r.includes("coordinator")) {
-    return { label: "PM", color: "bg-blue-100 text-blue-600" }
-  }
-  if (r.includes("social media") || r.includes("content") || r.includes("brand") || r.includes("marketing")) {
-    return { label: "Social", color: "bg-pink-100 text-pink-600" }
-  }
-  if (r.includes("dev") || r.includes("engineer") || r.includes("software") || r.includes("web") || r.includes("frontend") || r.includes("backend")) {
-    return { label: "Dev", color: "bg-green-100 text-green-600" }
-  }
-  if (r.includes("qa") || r.includes("sqa") || r.includes("quality")) {
-    return { label: "QA", color: "bg-orange-100 text-orange-600" }
-  }
-  if (r.includes("data") || r.includes("analyst") || r.includes("business analyst") || r.includes("ba")) {
-    return { label: "Data/BA", color: "bg-yellow-100 text-yellow-600" }
-  }
-  if (r.includes("ai") || r.includes("ml") || r.includes("machine learning")) {
-    return { label: "AI/ML", color: "bg-purple-100 text-purple-600" }
-  }
-  if (r.includes("ui") || r.includes("ux") || r.includes("design")) {
-    return { label: "Design", color: "bg-rose-100 text-rose-600" }
-  }
+  if (r.includes("pm") || r.includes("project manager") || r.includes("project management") || r.includes("coordinator")) return { label: "PM", color: "bg-blue-100 text-blue-600" }
+  if (r.includes("social media") || r.includes("content") || r.includes("brand") || r.includes("marketing")) return { label: "Social", color: "bg-pink-100 text-pink-600" }
+  if (r.includes("dev") || r.includes("engineer") || r.includes("software") || r.includes("web") || r.includes("frontend") || r.includes("backend")) return { label: "Dev", color: "bg-green-100 text-green-600" }
+  if (r.includes("qa") || r.includes("sqa") || r.includes("quality")) return { label: "QA", color: "bg-orange-100 text-orange-600" }
+  if (r.includes("data") || r.includes("analyst") || r.includes("business analyst") || r.includes("ba")) return { label: "Data/BA", color: "bg-yellow-100 text-yellow-600" }
+  if (r.includes("ai") || r.includes("ml") || r.includes("machine learning")) return { label: "AI/ML", color: "bg-purple-100 text-purple-600" }
+  if (r.includes("ui") || r.includes("ux") || r.includes("design")) return { label: "Design", color: "bg-rose-100 text-rose-600" }
   return { label: "Other", color: "bg-gray-100 text-gray-500" }
 }
 
@@ -67,9 +53,7 @@ function ViewModal({ app, onClose, onEdit, darkMode }) {
           <div>
             <h2 className={`text-xl font-bold ${titleColor}`}>{app.company}</h2>
             <p className={`text-sm mt-0.5 ${labelColor}`}>{app.role}</p>
-            {app.secondPreference && (
-              <p className={`text-xs mt-0.5 ${labelColor}`}>2nd: {app.secondPreference}</p>
-            )}
+            {app.secondPreference && <p className={`text-xs mt-0.5 ${labelColor}`}>2nd: {app.secondPreference}</p>}
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-300 text-xl ml-4">✕</button>
         </div>
@@ -89,8 +73,10 @@ function ViewModal({ app, onClose, onEdit, darkMode }) {
           )}
           {app.interviewDate && (
             <div className={`py-3 border-b ${dividerColor}`}>
-              <p className={`text-xs font-medium mb-1 ${labelColor}`}>Interview Date</p>
-              <p className={`text-sm ${valueColor}`}>{app.interviewDate}</p>
+              <p className={`text-xs font-medium mb-1 ${labelColor}`}>Interview Date & Time</p>
+              <p className={`text-sm ${valueColor}`}>
+                {app.interviewDate}{app.interviewTime ? ` at ${app.interviewTime}` : ""}
+              </p>
             </div>
           )}
           {app.source && (
@@ -102,9 +88,7 @@ function ViewModal({ app, onClose, onEdit, darkMode }) {
           {app.jobLink && (
             <div className={`py-3 border-b ${dividerColor}`}>
               <p className={`text-xs font-medium mb-1 ${labelColor}`}>Job Link</p>
-              <a href={app.jobLink} target="_blank" rel="noreferrer" className="text-sm text-blue-500 hover:underline break-all">
-                {app.jobLink}
-              </a>
+              <a href={app.jobLink} target="_blank" rel="noreferrer" className="text-sm text-blue-500 hover:underline break-all">{app.jobLink}</a>
             </div>
           )}
           {app.notes && (
@@ -116,18 +100,8 @@ function ViewModal({ app, onClose, onEdit, darkMode }) {
         </div>
 
         <div className="flex gap-3 mt-6">
-          <button
-            onClick={onClose}
-            className={`flex-1 border text-sm font-medium py-2 rounded-lg ${darkMode ? "border-gray-700 text-gray-400 hover:bg-gray-800" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}
-          >
-            Close
-          </button>
-          <button
-            onClick={onEdit}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg"
-          >
-            Edit
-          </button>
+          <button onClick={onClose} className={`flex-1 border text-sm font-medium py-2 rounded-lg ${darkMode ? "border-gray-700 text-gray-400 hover:bg-gray-800" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>Close</button>
+          <button onClick={onEdit} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg">Edit</button>
         </div>
       </div>
     </div>
@@ -136,12 +110,11 @@ function ViewModal({ app, onClose, onEdit, darkMode }) {
 
 function InterviewDateModal({ app, onConfirm, onSkip, darkMode }) {
   const [date, setDate] = useState("")
+  const [time, setTime] = useState("")
   const modalBg = darkMode ? "bg-gray-900" : "bg-white"
   const titleColor = darkMode ? "text-white" : "text-gray-800"
   const subColor = darkMode ? "text-gray-400" : "text-gray-500"
-  const inputClass = darkMode
-    ? "bg-gray-800 border-gray-700 text-white"
-    : "bg-white border-gray-200 text-gray-800"
+  const inputClass = darkMode ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-gray-200 text-gray-800"
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -149,31 +122,33 @@ function InterviewDateModal({ app, onConfirm, onSkip, darkMode }) {
         <div className="text-center mb-5">
           <p className="text-3xl mb-3">🗓️</p>
           <h2 className={`text-lg font-bold ${titleColor}`}>Schedule Interview</h2>
-          <p className={`text-sm mt-1 ${subColor}`}>
-            When is your interview at <span className="font-medium">{app.company}</span>?
-          </p>
+          <p className={`text-sm mt-1 ${subColor}`}>When is your interview at <span className="font-medium">{app.company}</span>?</p>
         </div>
 
-        <input
-          type="date"
-          value={date}
-          onChange={e => setDate(e.target.value)}
-          className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 mb-4 ${inputClass}`}
-        />
+        <div className="flex flex-col gap-3 mb-4">
+          <div>
+            <label className={`text-xs font-medium mb-1 block ${subColor}`}>Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${inputClass}`}
+            />
+          </div>
+          <div>
+            <label className={`text-xs font-medium mb-1 block ${subColor}`}>Time</label>
+            <input
+              type="time"
+              value={time}
+              onChange={e => setTime(e.target.value)}
+              className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${inputClass}`}
+            />
+          </div>
+        </div>
 
         <div className="flex gap-3">
-          <button
-            onClick={onSkip}
-            className={`flex-1 border text-sm font-medium py-2.5 rounded-xl ${darkMode ? "border-gray-700 text-gray-400 hover:bg-gray-800" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
-          >
-            Skip for now
-          </button>
-          <button
-            onClick={() => onConfirm(date)}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2.5 rounded-xl"
-          >
-            Save Date
-          </button>
+          <button onClick={onSkip} className={`flex-1 border text-sm font-medium py-2.5 rounded-xl ${darkMode ? "border-gray-700 text-gray-400 hover:bg-gray-800" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}>Skip for now</button>
+          <button onClick={() => onConfirm(date, time)} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2.5 rounded-xl">Save</button>
         </div>
       </div>
     </div>
@@ -219,35 +194,28 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
                       <div className="flex-1">
                         <p className={`font-medium text-sm ${companyColor}`}>{app.company}</p>
                         <p className={`text-xs mt-0.5 mb-2 ${roleColor}`}>{app.role}</p>
-                        {app.secondPreference && (
-                          <p className={`text-xs mb-2 ${roleColor}`}>2nd: {app.secondPreference}</p>
-                        )}
+                        {app.secondPreference && <p className={`text-xs mb-2 ${roleColor}`}>2nd: {app.secondPreference}</p>}
                       </div>
                       <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          if (window.confirm(`Delete ${app.company}?`)) deleteApplication(app.id)
-                        }}
+                        onClick={e => { e.stopPropagation(); if (window.confirm(`Delete ${app.company}?`)) deleteApplication(app.id) }}
                         className="text-gray-300 hover:text-red-500 text-xs px-1"
                       >🗑️</button>
                     </div>
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleTag.color}`}>
-                        {roleTag.label}
-                      </span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleTag.color}`}>{roleTag.label}</span>
                     </div>
                     <select
                       value={app.status}
                       onClick={e => e.stopPropagation()}
                       onChange={e => {
-  const newStatus = e.target.value
-  if (newStatus === "Interview" && !app.interviewDate) {
-    setInterviewApp(app)
-    updateStatus(app.id, "Interview")
-  } else {
-    updateStatus(app.id, newStatus)
-  }
-}}
+                        const newStatus = e.target.value
+                        if (newStatus === "Interview" && !app.interviewDate) {
+                          setInterviewApp(app)
+                          updateStatus(app.id, "Interview")
+                        } else {
+                          updateStatus(app.id, newStatus)
+                        }
+                      }}
                       className={`text-xs rounded-md px-2 py-1 w-full cursor-pointer border ${selectBg}`}
                     >
                       {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -261,20 +229,16 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
                       </div>
                     )}
                     {app.interviewDate && (
-                      <p className="text-xs text-purple-400 mt-1">🗓️ Interview: {app.interviewDate}</p>
+                      <p className="text-xs text-purple-400 mt-1">
+                        🗓️ Interview: {app.interviewDate}{app.interviewTime ? ` at ${app.interviewTime}` : ""}
+                      </p>
                     )}
-                    {app.source && (
-                      <p className="text-xs text-gray-400 mt-1">🔗 {app.source}</p>
-                    )}
-                    {app.notes && (
-                      <p className="text-xs text-gray-400 mt-1 italic truncate">📝 {app.notes.slice(0, 50)}{app.notes.length > 50 ? "..." : ""}</p>
-                    )}
+                    {app.source && <p className="text-xs text-gray-400 mt-1">🔗 {app.source}</p>}
+                    {app.notes && <p className="text-xs text-gray-400 mt-1 italic truncate">📝 {app.notes.slice(0, 50)}{app.notes.length > 50 ? "..." : ""}</p>}
                   </div>
                 )
               })}
-              {filtered.length === 0 && (
-                <p className={`text-xs text-center mt-4 ${emptyText}`}>No applications</p>
-              )}
+              {filtered.length === 0 && <p className={`text-xs text-center mt-4 ${emptyText}`}>No applications</p>}
             </div>
           )
         })}
@@ -292,10 +256,7 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
       {editingApp && (
         <ApplicationModal
           existingApp={editingApp}
-          onClose={() => {
-            setEditingApp(null)
-            setViewingApp(null)
-          }}
+          onClose={() => { setEditingApp(null); setViewingApp(null) }}
           darkMode={darkMode}
           onSave={(updated) => {
             updateApplication({ ...editingApp, ...updated })
@@ -310,10 +271,8 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
           app={interviewApp}
           darkMode={darkMode}
           onSkip={() => setInterviewApp(null)}
-          onConfirm={(date) => {
-            if (date) {
-              updateApplication({ ...interviewApp, status: "Interview", interviewDate: date })
-            }
+          onConfirm={(date, time) => {
+            if (date) updateApplication({ ...interviewApp, status: "Interview", interviewDate: date, interviewTime: time })
             setInterviewApp(null)
           }}
         />
