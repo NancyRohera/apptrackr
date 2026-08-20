@@ -2,11 +2,13 @@ import { useState } from "react"
 
 const STATUSES = ["Applied", "Screening", "Interview", "Offer", "Rejected"]
 const SOURCES = ["LinkedIn", "Rozee.pk", "Indeed", "Company Website", "Email", "Referral"]
+const JOB_TYPES = ["Internship", "Trainee", "Full Time", "Part Time", "Contract", "Freelance"]
 
 function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
   const [form, setForm] = useState({
     company: "",
     role: "",
+    jobType: "",
     secondPreference: "",
     status: "Applied",
     dateApplied: "",
@@ -29,7 +31,8 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
     const newErrors = {}
     if (!form.company.trim()) newErrors.company = "Company name is required"
     else if (form.company.length > 50) newErrors.company = "Company name must be under 50 characters"
-    if (form.role.length > 80) newErrors.role = "Role must be under 80 characters"
+    if (!form.role.trim()) newErrors.role = "First preference role is required"
+    else if (form.role.length > 80) newErrors.role = "Role must be under 80 characters"
     if (form.secondPreference.length > 80) newErrors.secondPreference = "Second preference must be under 80 characters"
     if (form.dateApplied) {
       const date = new Date(form.dateApplied)
@@ -38,10 +41,12 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
       if (isNaN(date.getTime())) newErrors.dateApplied = "Invalid date format"
       else if (date > today) newErrors.dateApplied = "Date applied can't be in the future"
     }
-    if (form.interviewDate) {
-      const date = new Date(form.interviewDate)
-      if (isNaN(date.getTime())) newErrors.interviewDate = "Invalid date format"
-      if (form.dateApplied && form.interviewDate < form.dateApplied) newErrors.interviewDate = "Interview date can't be before date applied"
+    if (form.status === "Interview") {
+      if (form.interviewDate) {
+        const date = new Date(form.interviewDate)
+        if (isNaN(date.getTime())) newErrors.interviewDate = "Invalid date format"
+        if (form.dateApplied && form.interviewDate < form.dateApplied) newErrors.interviewDate = "Interview date can't be before date applied"
+      }
     }
     if (form.jobLink && !/^https?:\/\/.+/.test(form.jobLink)) newErrors.jobLink = "Link must start with http:// or https://"
     if (form.notes.length > 300) newErrors.notes = `Notes too long — ${form.notes.length}/300 characters`
@@ -82,8 +87,8 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
           </div>
 
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>First Preference (Role)</label>
-            <input name="role" value={form.role} onChange={handleChange} placeholder="e.g. Social Media Manager"
+            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>First Preference (Role) *</label>
+            <input name="role" value={form.role} onChange={handleChange} placeholder="e.g. Web Developer"
               className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.role ? errorInputClass : inputClass}`} />
             {errors.role && <p className="text-xs text-red-500 mt-1">⚠️ {errors.role}</p>}
             <p className={`text-xs mt-1 text-right ${counterColor}`}>{form.role.length}/80</p>
@@ -91,11 +96,37 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
 
           <div>
             <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Second Preference (Role)</label>
-            <input name="secondPreference" value={form.secondPreference} onChange={handleChange} placeholder="e.g. Content Creator"
+            <input name="secondPreference" value={form.secondPreference} onChange={handleChange} placeholder="e.g. Business Analyst"
               className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.secondPreference ? errorInputClass : inputClass}`} />
             {errors.secondPreference && <p className="text-xs text-red-500 mt-1">⚠️ {errors.secondPreference}</p>}
             <p className={`text-xs mt-1 text-right ${counterColor}`}>{form.secondPreference.length}/80</p>
           </div>
+
+          <div>
+  <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Job Type</label>
+  <select
+    value={JOB_TYPES.includes(form.jobType) ? form.jobType : form.jobType === "" ? "" : "Other"}
+    onChange={e => {
+      if (e.target.value === "Other") setForm(prev => ({ ...prev, jobType: "other_custom" }))
+      else setForm(prev => ({ ...prev, jobType: e.target.value }))
+    }}
+    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
+  >
+    <option value="">Select job type</option>
+    {JOB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+    <option value="Other">Other</option>
+  </select>
+  {form.jobType !== "" && !JOB_TYPES.includes(form.jobType) && (
+    <input
+      name="jobType"
+      value={form.jobType === "other_custom" ? "" : form.jobType}
+      onChange={handleChange}
+      placeholder="Type job type..."
+      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 mt-2 ${inputClass}`}
+      autoFocus
+    />
+  )}
+</div>
 
           <div>
             <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Status</label>
@@ -113,8 +144,7 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
                 if (e.target.value === "Other") setForm(prev => ({ ...prev, source: "other_custom" }))
                 else setForm(prev => ({ ...prev, source: e.target.value }))
               }}
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
-            >
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}>
               <option value="">Select source</option>
               {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
               <option value="Other">Other</option>
@@ -133,18 +163,22 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
             {errors.dateApplied && <p className="text-xs text-red-500 mt-1">⚠️ {errors.dateApplied}</p>}
           </div>
 
-          <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Interview Date</label>
-            <input name="interviewDate" type="date" value={form.interviewDate} onChange={handleChange}
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.interviewDate ? errorInputClass : inputClass}`} />
-            {errors.interviewDate && <p className="text-xs text-red-500 mt-1">⚠️ {errors.interviewDate}</p>}
-          </div>
+          {form.status === "Interview" && (
+            <>
+              <div>
+                <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Interview Date</label>
+                <input name="interviewDate" type="date" value={form.interviewDate} onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.interviewDate ? errorInputClass : inputClass}`} />
+                {errors.interviewDate && <p className="text-xs text-red-500 mt-1">⚠️ {errors.interviewDate}</p>}
+              </div>
 
-          <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Interview Time</label>
-            <input name="interviewTime" type="time" value={form.interviewTime || ""} onChange={handleChange}
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`} />
-          </div>
+              <div>
+                <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Interview Time</label>
+                <input name="interviewTime" type="time" value={form.interviewTime || ""} onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`} />
+              </div>
+            </>
+          )}
 
           <div>
             <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Job Link</label>

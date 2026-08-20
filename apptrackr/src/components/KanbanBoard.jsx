@@ -58,10 +58,15 @@ function ViewModal({ app, onClose, onEdit, darkMode }) {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-300 text-xl ml-4">✕</button>
         </div>
 
-        <div className="mb-4">
+        <div className="flex gap-2 mb-4 flex-wrap">
           <span className={`text-xs font-medium px-3 py-1 rounded-full ${STATUS_COLORS[app.status] || "bg-gray-100 text-gray-600"}`}>
             {app.status}
           </span>
+          {app.jobType && (
+            <span className="text-xs font-medium px-3 py-1 rounded-full bg-gray-100 text-gray-600">
+              {app.jobType}
+            </span>
+          )}
         </div>
 
         <div>
@@ -74,9 +79,7 @@ function ViewModal({ app, onClose, onEdit, darkMode }) {
           {app.interviewDate && (
             <div className={`py-3 border-b ${dividerColor}`}>
               <p className={`text-xs font-medium mb-1 ${labelColor}`}>Interview Date & Time</p>
-              <p className={`text-sm ${valueColor}`}>
-                {app.interviewDate}{app.interviewTime ? ` at ${app.interviewTime}` : ""}
-              </p>
+              <p className={`text-sm ${valueColor}`}>{app.interviewDate}{app.interviewTime ? ` at ${app.interviewTime}` : ""}</p>
             </div>
           )}
           {app.source && (
@@ -128,21 +131,13 @@ function InterviewDateModal({ app, onConfirm, onSkip, darkMode }) {
         <div className="flex flex-col gap-3 mb-4">
           <div>
             <label className={`text-xs font-medium mb-1 block ${subColor}`}>Date</label>
-            <input
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${inputClass}`}
-            />
+            <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${inputClass}`} />
           </div>
           <div>
             <label className={`text-xs font-medium mb-1 block ${subColor}`}>Time</label>
-            <input
-              type="time"
-              value={time}
-              onChange={e => setTime(e.target.value)}
-              className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${inputClass}`}
-            />
+            <input type="time" value={time} onChange={e => setTime(e.target.value)}
+              className={`w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 ${inputClass}`} />
           </div>
         </div>
 
@@ -201,9 +196,14 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
                         className="text-gray-300 hover:text-red-500 text-xs px-1"
                       >🗑️</button>
                     </div>
-                    <div className="flex items-center gap-2 mb-2">
+
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleTag.color}`}>{roleTag.label}</span>
+                      {app.jobType && (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{app.jobType}</span>
+                      )}
                     </div>
+
                     <select
                       value={app.status}
                       onClick={e => e.stopPropagation()}
@@ -220,6 +220,7 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
                     >
                       {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
+
                     {app.dateApplied && (
                       <div className="flex items-center gap-2 mt-2">
                         <p className="text-xs text-gray-400">📅 {app.dateApplied}</p>
@@ -229,9 +230,7 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
                       </div>
                     )}
                     {app.interviewDate && (
-                      <p className="text-xs text-purple-400 mt-1">
-                        🗓️ Interview: {app.interviewDate}{app.interviewTime ? ` at ${app.interviewTime}` : ""}
-                      </p>
+                      <p className="text-xs text-purple-400 mt-1">🗓️ Interview: {app.interviewDate}{app.interviewTime ? ` at ${app.interviewTime}` : ""}</p>
                     )}
                     {app.source && <p className="text-xs text-gray-400 mt-1">🔗 {app.source}</p>}
                     {app.notes && <p className="text-xs text-gray-400 mt-1 italic truncate">📝 {app.notes.slice(0, 50)}{app.notes.length > 50 ? "..." : ""}</p>}
