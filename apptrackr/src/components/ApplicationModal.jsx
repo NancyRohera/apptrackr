@@ -3,12 +3,74 @@ import { useState } from "react"
 const STATUSES = ["Applied", "Screening", "Interview", "Offer", "Rejected"]
 const SOURCES = ["LinkedIn", "Rozee.pk", "Indeed", "Company Website", "Email", "Referral"]
 const JOB_TYPES = ["Internship", "Trainee", "Full Time", "Part Time", "Contract", "Freelance"]
+const WORK_MODES = ["On-site", "Remote", "Hybrid"]
 
-function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
+function AutocompleteInput({ name, value, onChange, placeholder, inputClass, darkMode, allApplications }) {
+  const [show, setShow] = useState(false)
+  const [query, setQuery] = useState(value || "")
+
+  const pastRoles = [...new Set(
+    allApplications
+      .map(app => name === "secondPreference" ? app.secondPreference : app.role)
+      .filter(r => r && r.trim() !== "")
+  )]
+
+  const suggestions = pastRoles.filter(r =>
+    r.toLowerCase().includes(query.toLowerCase()) && query.length > 0
+  ).slice(0, 6)
+
+  function handleInput(e) {
+    const val = e.target.value
+    setQuery(val)
+    onChange({ target: { name, value: val } })
+    setShow(true)
+  }
+
+  function handleSelect(role) {
+    setQuery(role)
+    onChange({ target: { name, value: role } })
+    setShow(false)
+  }
+
+  const dropBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+  const dropHover = darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-indigo-50 text-gray-700"
+
+  return (
+    <div className="relative">
+      <input
+        name={name}
+        value={query}
+        onChange={handleInput}
+        onBlur={() => setTimeout(() => setShow(false), 150)}
+        onFocus={() => query.length > 0 && setShow(true)}
+        placeholder={placeholder}
+        className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
+      />
+      {show && suggestions.length > 0 && (
+        <div className={`absolute z-50 w-full mt-1 border rounded-xl shadow-lg overflow-hidden ${dropBg}`}>
+          {suggestions.map(role => (
+            <button
+              key={role}
+              type="button"
+              onClick={() => handleSelect(role)}
+              className={`w-full text-left px-3 py-2 text-sm ${dropHover} transition flex items-center gap-2`}
+            >
+              <span className="text-xs">🕐</span>
+              {role}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ApplicationModal({ onClose, onSave, existingApp, darkMode, allApplications = [] }) {
   const [form, setForm] = useState({
     company: "",
     role: "",
     jobType: "",
+    workMode: "",
     secondPreference: "",
     status: "Applied",
     dateApplied: "",
@@ -41,12 +103,10 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
       if (isNaN(date.getTime())) newErrors.dateApplied = "Invalid date format"
       else if (date > today) newErrors.dateApplied = "Date applied can't be in the future"
     }
-    if (form.status === "Interview") {
-      if (form.interviewDate) {
-        const date = new Date(form.interviewDate)
-        if (isNaN(date.getTime())) newErrors.interviewDate = "Invalid date format"
-        if (form.dateApplied && form.interviewDate < form.dateApplied) newErrors.interviewDate = "Interview date can't be before date applied"
-      }
+    if (form.status === "Interview" && form.interviewDate) {
+      const date = new Date(form.interviewDate)
+      if (isNaN(date.getTime())) newErrors.interviewDate = "Invalid date format"
+      if (form.dateApplied && form.interviewDate < form.dateApplied) newErrors.interviewDate = "Interview date can't be before date applied"
     }
     if (form.jobLink && !/^https?:\/\/.+/.test(form.jobLink)) newErrors.jobLink = "Link must start with http:// or https://"
     if (form.notes.length > 300) newErrors.notes = `Notes too long — ${form.notes.length}/300 characters`
@@ -61,6 +121,7 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
   }
 
   const isCustomSource = form.source !== "" && !SOURCES.includes(form.source)
+  const isCustomJobType = form.jobType !== "" && !JOB_TYPES.includes(form.jobType)
   const modalBg = darkMode ? "bg-gray-900" : "bg-white"
   const labelColor = darkMode ? "text-gray-400" : "text-gray-500"
   const titleColor = darkMode ? "text-white" : "text-gray-800"
@@ -80,58 +141,103 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
 
           <div>
             <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Company Name *</label>
-            <input name="company" value={form.company} onChange={handleChange} placeholder="e.g. Google"
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.company ? errorInputClass : inputClass}`} />
+            <input
+              name="company"
+              value={form.company}
+              onChange={handleChange}
+              placeholder="e.g. Google"
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.company ? errorInputClass : inputClass}`}
+            />
             {errors.company && <p className="text-xs text-red-500 mt-1">⚠️ {errors.company}</p>}
             <p className={`text-xs mt-1 text-right ${counterColor}`}>{form.company.length}/50</p>
           </div>
 
           <div>
             <label className={`text-xs font-medium mb-1 block ${labelColor}`}>First Preference (Role) *</label>
-            <input name="role" value={form.role} onChange={handleChange} placeholder="e.g. Web Developer"
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.role ? errorInputClass : inputClass}`} />
+            <AutocompleteInput
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              placeholder="e.g. Business Analyst"
+              inputClass={errors.role ? errorInputClass : inputClass}
+              darkMode={darkMode}
+              allApplications={allApplications}
+            />
             {errors.role && <p className="text-xs text-red-500 mt-1">⚠️ {errors.role}</p>}
             <p className={`text-xs mt-1 text-right ${counterColor}`}>{form.role.length}/80</p>
           </div>
 
           <div>
             <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Second Preference (Role)</label>
-            <input name="secondPreference" value={form.secondPreference} onChange={handleChange} placeholder="e.g. Business Analyst"
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.secondPreference ? errorInputClass : inputClass}`} />
+            <AutocompleteInput
+              name="secondPreference"
+              value={form.secondPreference}
+              onChange={handleChange}
+              placeholder="e.g. Project Coordinator"
+              inputClass={errors.secondPreference ? errorInputClass : inputClass}
+              darkMode={darkMode}
+              allApplications={allApplications}
+            />
             {errors.secondPreference && <p className="text-xs text-red-500 mt-1">⚠️ {errors.secondPreference}</p>}
             <p className={`text-xs mt-1 text-right ${counterColor}`}>{form.secondPreference.length}/80</p>
           </div>
 
           <div>
-  <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Job Type</label>
-  <select
-    value={JOB_TYPES.includes(form.jobType) ? form.jobType : form.jobType === "" ? "" : "Other"}
-    onChange={e => {
-      if (e.target.value === "Other") setForm(prev => ({ ...prev, jobType: "other_custom" }))
-      else setForm(prev => ({ ...prev, jobType: e.target.value }))
-    }}
-    className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
-  >
-    <option value="">Select job type</option>
-    {JOB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-    <option value="Other">Other</option>
-  </select>
-  {form.jobType !== "" && !JOB_TYPES.includes(form.jobType) && (
-    <input
-      name="jobType"
-      value={form.jobType === "other_custom" ? "" : form.jobType}
-      onChange={handleChange}
-      placeholder="Type job type..."
-      className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 mt-2 ${inputClass}`}
-      autoFocus
-    />
-  )}
-</div>
+            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Job Type</label>
+            <select
+              value={isCustomJobType ? "Other" : form.jobType}
+              onChange={e => {
+                if (e.target.value === "Other") setForm(prev => ({ ...prev, jobType: "other_custom" }))
+                else setForm(prev => ({ ...prev, jobType: e.target.value }))
+              }}
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
+            >
+              <option value="">Select job type</option>
+              {JOB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+              <option value="Other">Other</option>
+            </select>
+            {isCustomJobType && (
+              <input
+                name="jobType"
+                value={form.jobType === "other_custom" ? "" : form.jobType}
+                onChange={handleChange}
+                placeholder="Type job type..."
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 mt-2 ${inputClass}`}
+                autoFocus
+              />
+            )}
+          </div>
+
+          <div>
+            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Work Mode</label>
+            <div className="flex gap-2">
+              {WORK_MODES.map(mode => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, workMode: prev.workMode === mode ? "" : mode }))}
+                  className={`flex-1 py-2 text-sm rounded-lg border font-medium transition ${
+                    form.workMode === mode
+                      ? "bg-indigo-600 text-white border-indigo-600"
+                      : darkMode
+                      ? "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                      : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <div>
             <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Status</label>
-            <select name="status" value={form.status} onChange={handleChange}
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}>
+            <select
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
+            >
               {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
@@ -144,22 +250,33 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
                 if (e.target.value === "Other") setForm(prev => ({ ...prev, source: "other_custom" }))
                 else setForm(prev => ({ ...prev, source: e.target.value }))
               }}
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}>
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
+            >
               <option value="">Select source</option>
               {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
               <option value="Other">Other</option>
             </select>
             {isCustomSource && (
-              <input name="source" value={form.source === "other_custom" ? "" : form.source} onChange={handleChange}
+              <input
+                name="source"
+                value={form.source === "other_custom" ? "" : form.source}
+                onChange={handleChange}
                 placeholder="Type where you found this job..."
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 mt-2 ${inputClass}`} autoFocus />
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 mt-2 ${inputClass}`}
+                autoFocus
+              />
             )}
           </div>
 
           <div>
             <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Date Applied</label>
-            <input name="dateApplied" type="date" value={form.dateApplied} onChange={handleChange}
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.dateApplied ? errorInputClass : inputClass}`} />
+            <input
+              name="dateApplied"
+              type="date"
+              value={form.dateApplied}
+              onChange={handleChange}
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.dateApplied ? errorInputClass : inputClass}`}
+            />
             {errors.dateApplied && <p className="text-xs text-red-500 mt-1">⚠️ {errors.dateApplied}</p>}
           </div>
 
@@ -167,30 +284,50 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
             <>
               <div>
                 <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Interview Date</label>
-                <input name="interviewDate" type="date" value={form.interviewDate} onChange={handleChange}
-                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.interviewDate ? errorInputClass : inputClass}`} />
+                <input
+                  name="interviewDate"
+                  type="date"
+                  value={form.interviewDate}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.interviewDate ? errorInputClass : inputClass}`}
+                />
                 {errors.interviewDate && <p className="text-xs text-red-500 mt-1">⚠️ {errors.interviewDate}</p>}
               </div>
-
               <div>
                 <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Interview Time</label>
-                <input name="interviewTime" type="time" value={form.interviewTime || ""} onChange={handleChange}
-                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`} />
+                <input
+                  name="interviewTime"
+                  type="time"
+                  value={form.interviewTime || ""}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
+                />
               </div>
             </>
           )}
 
           <div>
             <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Job Link</label>
-            <input name="jobLink" value={form.jobLink} onChange={handleChange} placeholder="e.g. https://linkedin.com/jobs/..."
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.jobLink ? errorInputClass : inputClass}`} />
+            <input
+              name="jobLink"
+              value={form.jobLink}
+              onChange={handleChange}
+              placeholder="e.g. https://linkedin.com/jobs/..."
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.jobLink ? errorInputClass : inputClass}`}
+            />
             {errors.jobLink && <p className="text-xs text-red-500 mt-1">⚠️ {errors.jobLink}</p>}
           </div>
 
           <div>
             <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Notes</label>
-            <textarea name="notes" value={form.notes} onChange={handleChange} placeholder="Any notes about this application..." rows={3}
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none ${errors.notes ? errorInputClass : inputClass}`} />
+            <textarea
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              placeholder="Any notes about this application..."
+              rows={3}
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none ${errors.notes ? errorInputClass : inputClass}`}
+            />
             {errors.notes && <p className="text-xs text-red-500 mt-1">⚠️ {errors.notes}</p>}
             <p className={`text-xs mt-1 text-right ${form.notes.length > 270 ? "text-red-400" : counterColor}`}>{form.notes.length}/300</p>
           </div>
@@ -199,7 +336,7 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode }) {
 
         <div className="flex gap-3 mt-6">
           <button onClick={onClose} className={`flex-1 border text-sm font-medium py-2 rounded-lg ${darkMode ? "border-gray-700 text-gray-400 hover:bg-gray-800" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>Cancel</button>
-          <button onClick={handleSubmit} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 rounded-lg">{existingApp ? "Save Changes" : "Add Application"}</button>
+          <button onClick={handleSubmit} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 rounded-lg">{existingApp ? "Save Changes" : "Add Application"}</button>
         </div>
       </div>
     </div>

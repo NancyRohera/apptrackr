@@ -150,7 +150,7 @@ function InterviewDateModal({ app, onConfirm, onSkip, darkMode }) {
   )
 }
 
-function KanbanBoard({ applications, updateStatus, updateApplication, deleteApplication, darkMode, filterStatus }) {
+function KanbanBoard({ applications, updateStatus, updateApplication, deleteApplication, darkMode, filterStatus, allApplications = [] }) {
   const [viewingApp, setViewingApp] = useState(null)
   const [editingApp, setEditingApp] = useState(null)
   const [interviewApp, setInterviewApp] = useState(null)
@@ -253,17 +253,18 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
       )}
 
       {editingApp && (
-        <ApplicationModal
-          existingApp={editingApp}
-          onClose={() => { setEditingApp(null); setViewingApp(null) }}
-          darkMode={darkMode}
-          onSave={(updated) => {
-            updateApplication({ ...editingApp, ...updated })
-            setEditingApp(null)
-            setViewingApp(null)
-          }}
-        />
-      )}
+  <ApplicationModal
+    existingApp={editingApp}
+    onClose={() => { setEditingApp(null); setViewingApp(null) }}
+    darkMode={darkMode}
+    allApplications={allApplications}
+    onSave={(updated) => {
+      updateApplication({ ...editingApp, ...updated })
+      setEditingApp(null)
+      setViewingApp(null)
+    }}
+  />
+)}
 
       {interviewApp && (
         <InterviewDateModal

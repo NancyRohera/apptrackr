@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react"
+import { supabase } from "./supabase"
 import Sidebar from "./components/Sidebar"
 import TopBar from "./components/TopBar"
 import KanbanBoard from "./components/KanbanBoard"
 import Analytics from "./components/Analytics"
 import CalendarView from "./components/CalendarView"
 import ApplicationModal from "./components/ApplicationModal"
+import Auth from "./components/Auth"
 import useApplications from "./hooks/useApplications"
 
 function App() {
-  const { applications, addApplication, updateApplication, deleteApplication, updateStatus } = useApplications()
+  const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const [activePage, setActivePage] = useState("board")
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState("")
@@ -16,9 +19,24 @@ function App() {
   const [sortBy, setSortBy] = useState("newest")
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true")
 
+  const { applications, loading, addApplication, updateApplication, deleteApplication, updateStatus } = useApplications(user?.id)
+
   useEffect(() => {
     localStorage.setItem("darkMode", darkMode)
   }, [darkMode])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setAuthLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   const filtered = applications
     .filter(app =>
@@ -35,6 +53,14 @@ function App() {
 
   const bg = darkMode ? "bg-gray-950" : "bg-[#F4F6F9]"
 
+  if (authLoading) return (
+    <div className={`min-h-screen flex items-center justify-center ${bg}`}>
+      <p className="text-gray-400 text-sm">Loading...</p>
+    </div>
+  )
+
+  if (!user) return <Auth darkMode={darkMode} />
+
   return (
     <div className={`flex h-screen overflow-hidden ${bg}`}>
       <Sidebar
@@ -42,8 +68,7 @@ function App() {
         setActivePage={setActivePage}
         applications={applications}
         darkMode={darkMode}
-        filterStatus={filterStatus}
-        setFilterStatus={setFilterStatus}
+        user={user}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -59,32 +84,42 @@ function App() {
           onAdd={() => setShowModal(true)}
           applications={applications}
           activePage={activePage}
+          user={user}
         />
 
         <main className="flex-1 overflow-y-auto p-6">
-          {activePage === "board" && (
-            <KanbanBoard
-              applications={filtered}
-              updateStatus={updateStatus}
-              updateApplication={updateApplication}
-              deleteApplication={deleteApplication}
-              darkMode={darkMode}
-              filterStatus={filterStatus}
-            />
-          )}
-          {activePage === "analytics" && (
-            <Analytics
-              applications={applications}
-              darkMode={darkMode}
-              onClose={() => setActivePage("board")}
-            />
-          )}
-          {activePage === "calendar" && (
-            <CalendarView
-              applications={applications}
-              darkMode={darkMode}
-              onClose={() => setActivePage("board")}
-            />
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-400 text-sm">Loading your applications...</p>
+            </div>
+          ) : (
+            <>
+              {activePage === "board" && (
+                <KanbanBoard
+                  applications={filtered}
+                  updateStatus={updateStatus}
+                  updateApplication={updateApplication}
+                  deleteApplication={deleteApplication}
+                  darkMode={darkMode}
+                  filterStatus={filterStatus}
+                  allApplications={applications}
+                />
+              )}
+              {activePage === "analytics" && (
+                <Analytics
+                  applications={applications}
+                  darkMode={darkMode}
+                  onClose={() => setActivePage("board")}
+                />
+              )}
+              {activePage === "calendar" && (
+                <CalendarView
+                  applications={applications}
+                  darkMode={darkMode}
+                  onClose={() => setActivePage("board")}
+                />
+              )}
+            </>
           )}
         </main>
       </div>
@@ -94,6 +129,7 @@ function App() {
           onClose={() => setShowModal(false)}
           onSave={addApplication}
           darkMode={darkMode}
+          allApplications={applications}
         />
       )}
     </div>
