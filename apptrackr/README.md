@@ -1,16 +1,45 @@
-# React + Vite
+# AppTrackr
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Started as a way to practice React while job hunting. Ended up being something I actually use every day to track my applications.
 
-Currently, two official plugins are available:
+## What it does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Add a job application, move it across columns as things progress, and get a clear picture of where everything stands.
 
-## React Compiler
+- Kanban board — Applied → Screening → Interview → Offer → Rejected
+- Stats dashboard with response rate, ghosting rate, and interview conversion rate
+- Analytics page with charts — role types, sources, day of week, pipeline funnel
+- Interview calendar with month and week views
+- Schedule interviews with date and time directly from the board
+- Color coded role badges — PM, Dev, Social, QA, Data/BA, AI/ML, Design
+- Job type tags — Internship, Trainee, Full Time, Part Time, Contract
+- Work mode badges — Remote, Hybrid, On-site
+- Smart role autocomplete from your own history
+- Follow up reminders for applications older than 14 days
+- Duplicate application warnings
+- Search, filter by status, sort by date or name
+- Dark mode with persistent preference
+- Export to CSV
+- Confetti when you land an offer 🎉
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Built with
 
-## Expanding the Oxlint configuration
+React, JavaScript, Tailwind CSS, Vite, Recharts, react-big-calendar, date-fns, canvas-confetti, Lucide icons
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Backend
+
+REST API built with Node.js, Express, and MongoDB Atlas with JWT authentication is available in the `/backend` folder. Frontend currently uses localStorage for data persistence.
+
+## Running locally
+
+```bash
+cd apptrackr
+npm install
+npm run dev
+```
+
+## About
+
+I'm Nancy, a CS grad from SZABIST Karachi looking for roles in software development, project management, and business analysis. Built this because tracking 70+ job applications in Excel wasn't cutting it.
+
+[LinkedIn](https://linkedin.com/in/nancyrohera) · [GitHub](https://github.com/NancyRohera)
