@@ -14,8 +14,11 @@ function App() {
   const [search, setSearch] = useState("")
   const [filterStatus, setFilterStatus] = useState("All")
   const [sortBy, setSortBy] = useState("newest")
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true")
-
+  
+const [darkMode, setDarkMode] = useState(() => {
+  const saved = localStorage.getItem("darkMode")
+  return saved === null ? false : saved === "true"
+})
   useEffect(() => {
     localStorage.setItem("darkMode", darkMode)
   }, [darkMode])
@@ -33,7 +36,7 @@ function App() {
       return 0
     })
 
-  const bg = darkMode ? "bg-gray-950" : "bg-[#F4F6F9]"
+  const bg = darkMode ? "bg-gray-950" : "bg-[#FAF7F2]"
 
   return (
     <div className={`flex h-screen overflow-hidden ${bg}`}>
@@ -41,7 +44,6 @@ function App() {
         activePage={activePage}
         setActivePage={setActivePage}
         applications={applications}
-        darkMode={darkMode}
       />
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -59,7 +61,7 @@ function App() {
           activePage={activePage}
         />
 
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto px-8 py-4">
           {activePage === "board" && (
             <KanbanBoard
               applications={filtered}

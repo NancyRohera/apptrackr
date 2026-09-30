@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Trash2 } from "lucide-react"
 import ApplicationModal from "./ApplicationModal"
 
 const STATUSES = ["Applied", "Screening", "Interview", "Offer", "Rejected"]
@@ -155,14 +156,14 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
   const [editingApp, setEditingApp] = useState(null)
   const [interviewApp, setInterviewApp] = useState(null)
 
-  const colBg = darkMode ? "bg-gray-800" : "bg-gray-50"
-  const cardBg = darkMode ? "bg-gray-700 border-gray-600" : "bg-white border-gray-100"
-  const titleColor = darkMode ? "text-gray-200" : "text-gray-700"
-  const companyColor = darkMode ? "text-white" : "text-gray-800"
-  const roleColor = darkMode ? "text-gray-300" : "text-gray-400"
-  const selectBg = darkMode ? "bg-gray-800 border-gray-600 text-gray-300" : "border-gray-200 text-gray-600"
-  const emptyText = darkMode ? "text-gray-500" : "text-gray-300"
-  const countBg = darkMode ? "bg-gray-700 border-gray-600 text-gray-400" : "bg-white border-gray-200 text-gray-500"
+  const colBg = darkMode ? "bg-gray-900 border-gray-800" : "bg-[#F0EBE3] border-[#E8E0D5]"
+const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-[#EDE8E0]"
+const companyColor = darkMode ? "text-white" : "text-[#1C1917]"
+const roleColor = darkMode ? "text-gray-400" : "text-[#78716C]"
+const selectBg = darkMode ? "bg-gray-700 border-gray-600 text-gray-300" : "bg-[#FAF7F2] border-[#E8E0D5] text-[#78716C]"
+const emptyText = darkMode ? "text-gray-600" : "text-[#C4BAB0]"
+const countBg = darkMode ? "bg-gray-700 border-gray-600 text-gray-400" : "bg-white border-[#E8E0D5] text-[#78716C]"
+const titleColor = darkMode ? "text-gray-200" : "text-[#1C1917]"
 
   const columnsToShow = filterStatus === "All" ? STATUSES : [filterStatus]
 
@@ -181,21 +182,28 @@ function KanbanBoard({ applications, updateStatus, updateApplication, deleteAppl
                 const roleTag = getRoleTag(app.role)
                 return (
                   <div
-                    key={app.id}
-                    onClick={() => setViewingApp(app)}
-                    className={`${cardBg} rounded-lg p-3 shadow-sm border cursor-pointer hover:shadow-md transition-shadow`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <p className={`font-medium text-sm ${companyColor}`}>{app.company}</p>
-                        <p className={`text-xs mt-0.5 mb-2 ${roleColor}`}>{app.role}</p>
-                        {app.secondPreference && <p className={`text-xs mb-2 ${roleColor}`}>2nd: {app.secondPreference}</p>}
-                      </div>
-                      <button
-                        onClick={e => { e.stopPropagation(); if (window.confirm(`Delete ${app.company}?`)) deleteApplication(app.id) }}
-                        className="text-gray-300 hover:text-red-500 text-xs px-1"
-                      >🗑️</button>
-                    </div>
+  key={app.id}
+  onClick={() => setViewingApp(app)}
+  className={`${cardBg} rounded-xl p-4 border cursor-pointer hover:shadow-md transition-all hover:-translate-y-0.5`}
+>
+  <div className="flex items-start justify-between gap-2 mb-3">
+    <div className="flex items-center gap-2.5 flex-1 min-w-0">
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0"
+        style={{ background: `hsl(${app.company.charCodeAt(0) * 10 % 360}, 50%, 45%)` }}>
+        {app.company.charAt(0).toUpperCase()}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`font-semibold text-sm truncate ${companyColor}`}>{app.company}</p>
+        <p className={`text-xs mt-0.5 truncate ${roleColor}`}>{app.role}</p>
+      </div>
+    </div>
+    <button
+      onClick={e => { e.stopPropagation(); if (window.confirm(`Delete ${app.company}?`)) deleteApplication(app.id) }}
+      className="text-gray-300 hover:text-rose-400 transition shrink-0"
+    >
+      <Trash2 size={13} />
+    </button>
+  </div>
 
                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleTag.color}`}>{roleTag.label}</span>

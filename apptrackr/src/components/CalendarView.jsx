@@ -4,231 +4,118 @@ import { format, parse, startOfWeek, getDay } from "date-fns"
 import { enUS } from "date-fns/locale"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek,
-  getDay,
-  locales: { "en-US": enUS },
-})
+const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales: { "en-US": enUS } })
 
-function CalendarView({ applications, darkMode, onClose }) {
+function CalendarView({ applications, darkMode }) {
   const [currentView, setCurrentView] = useState("month")
   const [currentDate, setCurrentDate] = useState(new Date())
 
-  const bg = darkMode ? "bg-gray-950" : "bg-slate-50"
-  const cardBg = darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-100"
-  const titleColor = darkMode ? "text-white" : "text-gray-900"
-  const subColor = darkMode ? "text-gray-400" : "text-gray-400"
-  const btnBase = darkMode
-    ? "border-gray-700 text-gray-400 hover:bg-gray-800 bg-gray-900"
-    : "border-gray-200 text-gray-500 hover:bg-gray-100 bg-white"
+  const cardBg = darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-[#E8E0D5]"
+  const titleColor = darkMode ? "text-white" : "text-[#1C1917]"
+  const subColor = darkMode ? "text-gray-500" : "text-[#78716C]"
+  const btnBase = darkMode ? "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700" : "bg-white border-[#E8E0D5] text-[#78716C] hover:bg-[#F5F0E8]"
+  const activeBtn = "bg-[#1C1917] text-white border-[#1C1917]"
 
   const events = applications
     .filter(app => app.interviewDate)
-    .map(app => ({
-      title: `${app.company} — ${app.role}`,
-      start: new Date(app.interviewDate + "T09:00:00"),
-      end: new Date(app.interviewDate + "T10:00:00"),
-      resource: app,
-    }))
+    .map(app => {
+      const startTime = app.interviewTime || "09:00"
+      const start = new Date(app.interviewDate + "T" + startTime + ":00")
+      const end = new Date(start)
+      end.setHours(end.getHours() + 1)
+      return { title: `${app.company} — ${app.role}`, start, end, resource: app }
+    })
 
-  function navigate(direction) {
+  function navigate(dir) {
     const date = new Date(currentDate)
-    if (currentView === "month") {
-      date.setMonth(date.getMonth() + (direction === "next" ? 1 : -1))
-    } else if (currentView === "week") {
-      date.setDate(date.getDate() + (direction === "next" ? 7 : -7))
-    } else {
-      date.setMonth(date.getMonth() + (direction === "next" ? 1 : -1))
-    }
+    if (currentView === "week") date.setDate(date.getDate() + (dir === "next" ? 7 : -7))
+    else date.setMonth(date.getMonth() + (dir === "next" ? 1 : -1))
     setCurrentDate(date)
   }
 
-  function goToToday() {
-    setCurrentDate(new Date())
-  }
-
-  const label = currentView === "month"
-    ? format(currentDate, "MMMM yyyy")
-    : currentView === "week"
+  const label = currentView === "week"
     ? `Week of ${format(currentDate, "MMM d, yyyy")}`
     : format(currentDate, "MMMM yyyy")
 
   return (
-    <div className={`fixed inset-0 ${bg} z-50 overflow-y-auto`}>
-      <style>{`
-        .rbc-calendar { background: transparent !important; }
-        .rbc-toolbar { display: none !important; }
-        .rbc-header {
-          background: ${darkMode ? "#111827" : "#f8fafc"} !important;
-          color: ${darkMode ? "#e5e7eb" : "#374151"} !important;
-          border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important;
-          padding: 8px !important;
-          font-size: 13px !important;
-        }
-        .rbc-month-view {
-          border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important;
-          border-radius: 12px !important;
-          overflow: hidden !important;
-        }
-        .rbc-day-bg {
-          background: ${darkMode ? "#0f172a" : "#ffffff"} !important;
-        }
-        .rbc-off-range-bg {
-          background: ${darkMode ? "#0a0f1a" : "#f8fafc"} !important;
-        }
-        .rbc-today {
-          background: ${darkMode ? "#1e1b4b" : "#eff6ff"} !important;
-        }
-        .rbc-date-cell {
-          color: ${darkMode ? "#9ca3af" : "#6b7280"} !important;
-          font-size: 12px !important;
-          padding: 4px 8px !important;
-        }
-        .rbc-date-cell.rbc-now {
-          color: ${darkMode ? "#818cf8" : "#4f46e5"} !important;
-          font-weight: 600 !important;
-        }
-        .rbc-row-segment { padding: 2px 4px !important; }
-        .rbc-event {
-          background: #6366f1 !important;
-          border: none !important;
-          border-radius: 6px !important;
-          font-size: 11px !important;
-          padding: 2px 6px !important;
-        }
-        .rbc-event:focus { outline: none !important; }
-        .rbc-show-more { color: #6366f1 !important; font-size: 11px !important; }
-        .rbc-month-row { border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important; }
-        .rbc-day-bg + .rbc-day-bg { border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important; }
-        .rbc-agenda-view table { color: ${darkMode ? "#e5e7eb" : "#374151"} !important; }
-        .rbc-agenda-date-cell, .rbc-agenda-time-cell, .rbc-agenda-event-cell {
-          background: ${darkMode ? "#0f172a" : "#ffffff"} !important;
-          color: ${darkMode ? "#e5e7eb" : "#374151"} !important;
-          border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important;
-        }
-        .rbc-agenda-empty { color: ${darkMode ? "#6b7280" : "#9ca3af"} !important; }
-        .rbc-week-view { border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important; }
-        .rbc-time-view { border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important; }
-        .rbc-time-header { background: ${darkMode ? "#111827" : "#f8fafc"} !important; }
-        .rbc-time-content { background: ${darkMode ? "#0f172a" : "#ffffff"} !important; }
-        .rbc-timeslot-group { border-color: ${darkMode ? "#1f2937" : "#e5e7eb"} !important; }
-        .rbc-time-slot { color: ${darkMode ? "#6b7280" : "#9ca3af"} !important; }
-      `}</style>
+    <div className="space-y-4">
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
-
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className={`text-2xl font-bold ${titleColor}`}>Interview Calendar</h1>
-            <p className={`text-sm mt-1 ${subColor}`}>
-              {events.length} interview{events.length !== 1 ? "s" : ""} scheduled
-            </p>
+      {/* Upcoming interviews */}
+      {events.length > 0 && (
+        <div className={`rounded-2xl border p-5 ${cardBg}`}>
+          <h2 className={`font-semibold mb-3 ${titleColor}`}>Upcoming interviews</h2>
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {events.sort((a, b) => a.start - b.start).slice(0, 5).map((event, i) => (
+              <div key={i} className={`shrink-0 rounded-xl border p-4 min-w-[200px] ${darkMode ? "bg-gray-800 border-gray-700" : "bg-[#FAF7F2] border-[#E8E0D5]"}`}>
+                <div className="w-10 h-10 rounded-xl bg-[#1C1917] flex flex-col items-center justify-center mb-3">
+                  <p className="text-white text-xs">{format(event.start, "MMM")}</p>
+                  <p className="text-white text-base font-bold leading-none">{format(event.start, "d")}</p>
+                </div>
+                <p className={`font-semibold text-sm ${titleColor}`}>{event.resource.company}</p>
+                <p className={`text-xs mt-0.5 ${subColor}`}>{event.resource.role}</p>
+                {event.resource.interviewTime && (
+                  <p className={`text-xs mt-2 ${subColor}`}>🕐 {event.resource.interviewTime}</p>
+                )}
+              </div>
+            ))}
           </div>
-          <button
-            onClick={onClose}
-            className={`text-sm px-4 py-2 rounded-xl border font-medium transition ${btnBase}`}
-          >
-            ← Back
-          </button>
         </div>
+      )}
+
+      {/* Calendar */}
+      <div className={`rounded-2xl border p-6 ${cardBg}`}>
+        <style>{`
+          .rbc-calendar { background: transparent !important; }
+          .rbc-toolbar { display: none !important; }
+          .rbc-header { background: ${darkMode ? "#111827" : "#FAF7F2"} !important; color: ${darkMode ? "#9ca3af" : "#78716C"} !important; border-color: ${darkMode ? "#1f2937" : "#E8E0D5"} !important; padding: 8px !important; font-size: 12px !important; font-weight: 500 !important; }
+          .rbc-month-view { border-color: ${darkMode ? "#1f2937" : "#E8E0D5"} !important; border-radius: 12px !important; overflow: hidden !important; }
+          .rbc-day-bg { background: ${darkMode ? "#0f172a" : "#ffffff"} !important; }
+          .rbc-off-range-bg { background: ${darkMode ? "#0a0f1a" : "#FAF7F2"} !important; }
+          .rbc-today { background: ${darkMode ? "#1e1b4b" : "#F5F0E8"} !important; }
+          .rbc-date-cell { color: ${darkMode ? "#9ca3af" : "#78716C"} !important; font-size: 12px !important; padding: 4px 8px !important; }
+          .rbc-date-cell.rbc-now { color: ${darkMode ? "#A67C52" : "#A67C52"} !important; font-weight: 600 !important; }
+          .rbc-event { background: #1C1917 !important; border: none !important; border-radius: 6px !important; font-size: 11px !important; padding: 2px 6px !important; }
+          .rbc-month-row { border-color: ${darkMode ? "#1f2937" : "#E8E0D5"} !important; }
+          .rbc-day-bg + .rbc-day-bg { border-color: ${darkMode ? "#1f2937" : "#E8E0D5"} !important; }
+          .rbc-agenda-date-cell, .rbc-agenda-time-cell, .rbc-agenda-event-cell { background: ${darkMode ? "#0f172a" : "#ffffff"} !important; color: ${darkMode ? "#e5e7eb" : "#1C1917"} !important; border-color: ${darkMode ? "#1f2937" : "#E8E0D5"} !important; }
+        `}</style>
 
         {/* Custom toolbar */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex gap-2">
-            <button
-              onClick={goToToday}
-              className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${btnBase}`}
-            >
-              Today
-            </button>
-            <button
-              onClick={() => navigate("prev")}
-              className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${btnBase}`}
-            >
-              ←
-            </button>
-            <button
-              onClick={() => navigate("next")}
-              className={`text-sm px-3 py-1.5 rounded-lg border font-medium ${btnBase}`}
-            >
-              →
-            </button>
+            <button onClick={() => setCurrentDate(new Date())} className={`text-sm px-3 py-1.5 rounded-lg border font-medium transition ${btnBase}`}>Today</button>
+            <button onClick={() => navigate("prev")} className={`text-sm px-3 py-1.5 rounded-lg border font-medium transition ${btnBase}`}>←</button>
+            <button onClick={() => navigate("next")} className={`text-sm px-3 py-1.5 rounded-lg border font-medium transition ${btnBase}`}>→</button>
           </div>
-          <p className={`font-semibold text-base ${titleColor}`}>{label}</p>
+          <p className={`font-semibold ${titleColor}`}>{label}</p>
           <div className="flex gap-2">
             {["month", "week", "agenda"].map(v => (
-              <button
-                key={v}
-                onClick={() => setCurrentView(v)}
-                className={`text-sm px-3 py-1.5 rounded-lg capitalize border font-medium transition ${currentView === v ? "bg-indigo-600 text-white border-indigo-600" : btnBase}`}
-              >
-                {v}
-              </button>
+              <button key={v} onClick={() => setCurrentView(v)} className={`text-sm px-3 py-1.5 rounded-lg border font-medium capitalize transition ${currentView === v ? activeBtn : btnBase}`}>{v}</button>
             ))}
           </div>
         </div>
 
         {events.length === 0 ? (
-          <div className={`rounded-2xl border p-12 text-center ${cardBg}`}>
-            <p className="text-4xl mb-4">📅</p>
-            <p className={`font-semibold text-lg ${titleColor}`}>No interviews scheduled yet</p>
-            <p className={`text-sm mt-2 ${subColor}`}>Add an interview date to any application and it will show up here</p>
+          <div className="text-center py-16">
+            <p className="text-4xl mb-3">📅</p>
+            <p className={`font-semibold ${titleColor}`}>No interviews scheduled yet</p>
+            <p className={`text-sm mt-1 ${subColor}`}>Add an interview date to any application and it will appear here</p>
           </div>
         ) : (
-          <div className={`rounded-2xl border p-6 ${cardBg}`}>
-            <Calendar
-              localizer={localizer}
-              events={events}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: 600 }}
-              view={currentView}
-              date={currentDate}
-              onView={setCurrentView}
-              onNavigate={setCurrentDate}
-              views={["month", "week", "agenda"]}
-              eventPropGetter={() => ({
-                style: {
-                  backgroundColor: "#6366f1",
-                  borderRadius: "6px",
-                  border: "none",
-                  fontSize: "11px",
-                  padding: "2px 6px",
-                }
-              })}
-            />
-          </div>
+          <Calendar
+            localizer={localizer}
+            events={events}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: 500 }}
+            view={currentView}
+            date={currentDate}
+            onView={setCurrentView}
+            onNavigate={setCurrentDate}
+            views={["month", "week", "agenda"]}
+            eventPropGetter={() => ({ style: { backgroundColor: "#1C1917", borderRadius: "6px", border: "none", fontSize: "11px", padding: "2px 6px" } })}
+          />
         )}
-
-        {events.length > 0 && (
-          <div className="mt-6">
-            <p className={`text-sm font-semibold ${titleColor} mb-3`}>Upcoming Interviews</p>
-            <div className="grid grid-cols-1 gap-3">
-              {events
-                .sort((a, b) => a.start - b.start)
-                .map((event, i) => (
-                  <div key={i} className={`rounded-xl border p-4 flex items-center gap-4 ${cardBg}`}>
-                    <div className="w-12 h-12 rounded-xl bg-indigo-500 flex flex-col items-center justify-center shrink-0">
-                      <p className="text-white text-xs font-medium">{format(event.start, "MMM")}</p>
-                      <p className="text-white text-lg font-bold leading-none">{format(event.start, "d")}</p>
-                    </div>
-                    <div>
-                      <p className={`font-medium text-sm ${titleColor}`}>{event.resource.company}</p>
-                      <p className={`text-xs mt-0.5 ${subColor}`}>{event.resource.role}</p>
-                    </div>
-                    <div className="ml-auto">
-                      <span className={`text-xs px-2 py-1 rounded-full ${darkMode ? "bg-indigo-900 text-indigo-300" : "bg-indigo-50 text-indigo-600"}`}>
-                        {format(event.start, "EEE, MMM d")}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
-
       </div>
     </div>
   )

@@ -5,55 +5,70 @@ const SOURCES = ["LinkedIn", "Rozee.pk", "Indeed", "Company Website", "Email", "
 const JOB_TYPES = ["Internship", "Trainee", "Full Time", "Part Time", "Contract", "Freelance"]
 const WORK_MODES = ["On-site", "Remote", "Hybrid"]
 
-function AutocompleteInput({ name, value, onChange, placeholder, inputClass, darkMode, allApplications }) {
+function AutocompleteInput({
+  name,
+  value,
+  onChange,
+  placeholder,
+  inputClass,
+  darkMode,
+  allApplications
+}) {
   const [show, setShow] = useState(false)
-  const [query, setQuery] = useState(value || "")
 
   const pastRoles = [...new Set(
     allApplications
-      .map(app => name === "secondPreference" ? app.secondPreference : app.role)
-      .filter(r => r && r.trim() !== "")
+      .flatMap(app => [app.role, app.secondPreference])
+      .filter(r => r && r.trim() !== "" && r !== "other_custom")
   )]
 
-  const suggestions = pastRoles.filter(r =>
-    r.toLowerCase().includes(query.toLowerCase()) && query.length > 0
-  ).slice(0, 6)
-
-  function handleInput(e) {
-    const val = e.target.value
-    setQuery(val)
-    onChange({ target: { name, value: val } })
-    setShow(true)
-  }
+  const suggestions = value && value.length > 0
+    ? pastRoles
+        .filter(r => r.toLowerCase().includes(value.toLowerCase()))
+        .slice(0, 6)
+    : pastRoles.slice(0, 6)
 
   function handleSelect(role) {
-    setQuery(role)
     onChange({ target: { name, value: role } })
     setShow(false)
   }
 
-  const dropBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-  const dropHover = darkMode ? "hover:bg-gray-700 text-gray-200" : "hover:bg-indigo-50 text-gray-700"
+  const dropBg = darkMode
+    ? "bg-gray-800 border-gray-700"
+    : "bg-white border-[#E8E0D5]"
+
+  const dropHover = darkMode
+    ? "hover:bg-gray-700 text-gray-200"
+    : "hover:bg-[#FAF7F2] text-[#1C1917]"
 
   return (
     <div className="relative">
       <input
         name={name}
-        value={query}
-        onChange={handleInput}
-        onBlur={() => setTimeout(() => setShow(false), 150)}
-        onFocus={() => query.length > 0 && setShow(true)}
+        value={value}
+        onChange={e => {
+          onChange(e)
+          setShow(true)
+        }}
+        onBlur={() => setTimeout(() => setShow(false), 200)}
+        onFocus={() => setShow(true)}
         placeholder={placeholder}
-        className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
+        className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#A67C52]/30 ${inputClass}`}
       />
+
       {show && suggestions.length > 0 && (
-        <div className={`absolute z-50 w-full mt-1 border rounded-xl shadow-lg overflow-hidden ${dropBg}`}>
+        <div
+          className={`absolute z-50 w-full mt-1 border rounded-xl shadow-lg overflow-hidden ${dropBg}`}
+        >
           {suggestions.map(role => (
             <button
               key={role}
               type="button"
-              onClick={() => handleSelect(role)}
-              className={`w-full text-left px-3 py-2 text-sm ${dropHover} transition flex items-center gap-2`}
+              onMouseDown={e => {
+                e.preventDefault()
+                handleSelect(role)
+              }}
+              className={`w-full text-left px-3 py-2 text-sm transition flex items-center gap-2 ${dropHover}`}
             >
               <span className="text-xs">🕐</span>
               {role}
@@ -65,7 +80,13 @@ function AutocompleteInput({ name, value, onChange, placeholder, inputClass, dar
   )
 }
 
-function ApplicationModal({ onClose, onSave, existingApp, darkMode, allApplications = [] }) {
+function ApplicationModal({
+  onClose,
+  onSave,
+  existingApp,
+  darkMode,
+  allApplications = []
+}) {
   const [form, setForm] = useState({
     company: "",
     role: "",
@@ -85,121 +106,297 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode, allApplicati
   const [errors, setErrors] = useState({})
 
   function handleChange(e) {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
-    setErrors(prev => ({ ...prev, [e.target.name]: "" }))
+    setForm(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
+
+    setErrors(prev => ({
+      ...prev,
+      [e.target.name]: ""
+    }))
   }
 
   function validate() {
     const newErrors = {}
-    if (!form.company.trim()) newErrors.company = "Company name is required"
-    else if (form.company.length > 50) newErrors.company = "Company name must be under 50 characters"
-    if (!form.role.trim()) newErrors.role = "First preference role is required"
-    else if (form.role.length > 80) newErrors.role = "Role must be under 80 characters"
-    if (form.secondPreference.length > 80) newErrors.secondPreference = "Second preference must be under 80 characters"
+
+    if (!form.company.trim()) {
+      newErrors.company = "Company name is required"
+    } else if (form.company.length > 50) {
+      newErrors.company = "Company name must be under 50 characters"
+    }
+
+    if (!form.role.trim()) {
+      newErrors.role = "First preference role is required"
+    } else if (form.role.length > 80) {
+      newErrors.role = "Role must be under 80 characters"
+    }
+
+    if (form.secondPreference.length > 80) {
+      newErrors.secondPreference =
+        "Second preference must be under 80 characters"
+    }
+
     if (form.dateApplied) {
       const date = new Date(form.dateApplied)
       const today = new Date()
+
       today.setHours(23, 59, 59, 999)
-      if (isNaN(date.getTime())) newErrors.dateApplied = "Invalid date format"
-      else if (date > today) newErrors.dateApplied = "Date applied can't be in the future"
+
+      if (isNaN(date.getTime())) {
+        newErrors.dateApplied = "Invalid date format"
+      } else if (date > today) {
+        newErrors.dateApplied = "Date applied can't be in the future"
+      }
     }
+
     if (form.status === "Interview" && form.interviewDate) {
       const date = new Date(form.interviewDate)
-      if (isNaN(date.getTime())) newErrors.interviewDate = "Invalid date format"
-      if (form.dateApplied && form.interviewDate < form.dateApplied) newErrors.interviewDate = "Interview date can't be before date applied"
+
+      if (isNaN(date.getTime())) {
+        newErrors.interviewDate = "Invalid date format"
+      }
+
+      if (
+        form.dateApplied &&
+        form.interviewDate < form.dateApplied
+      ) {
+        newErrors.interviewDate =
+          "Interview date can't be before date applied"
+      }
     }
-    if (form.jobLink && !/^https?:\/\/.+/.test(form.jobLink)) newErrors.jobLink = "Link must start with http:// or https://"
-    if (form.notes.length > 300) newErrors.notes = `Notes too long — ${form.notes.length}/300 characters`
+
+    if (
+      form.jobLink &&
+      !/^https?:\/\/.+/.test(form.jobLink)
+    ) {
+      newErrors.jobLink =
+        "Link must start with http:// or https://"
+    }
+
+    if (form.notes.length > 300) {
+      newErrors.notes =
+        `Notes too long — ${form.notes.length}/300 characters`
+    }
+
     return newErrors
   }
 
   function handleSubmit() {
     const newErrors = validate()
-    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
     onSave(form)
     onClose()
   }
 
-  const isCustomSource = form.source !== "" && !SOURCES.includes(form.source)
-  const isCustomJobType = form.jobType !== "" && !JOB_TYPES.includes(form.jobType)
-  const modalBg = darkMode ? "bg-gray-900" : "bg-white"
-  const labelColor = darkMode ? "text-gray-400" : "text-gray-500"
-  const titleColor = darkMode ? "text-white" : "text-gray-800"
-  const inputClass = darkMode ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500" : "bg-white border-gray-200 text-gray-800 placeholder-gray-400"
-  const errorInputClass = darkMode ? "bg-red-950 border-red-500 text-white placeholder-gray-500" : "bg-red-50 border-red-400 text-gray-800"
-  const counterColor = darkMode ? "text-gray-600" : "text-gray-300"
+  const isCustomSource =
+    form.source !== "" && !SOURCES.includes(form.source)
+
+  const isCustomJobType =
+    form.jobType !== "" && !JOB_TYPES.includes(form.jobType)
+
+  const modalBg = darkMode
+    ? "bg-gray-900"
+    : "bg-white"
+
+  const labelColor = darkMode
+    ? "text-gray-400"
+    : "text-[#78716C]"
+
+  const titleColor = darkMode
+    ? "text-white"
+    : "text-[#1C1917]"
+
+  const inputClass = darkMode
+    ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500"
+    : "bg-[#FAF7F2] border-[#E8E0D5] text-[#1C1917] placeholder-[#A8A29E]"
+
+  const errorInputClass = darkMode
+    ? "bg-red-950 border-red-500 text-white"
+    : "bg-red-50 border-red-300 text-[#1C1917]"
+
+  const counterColor = darkMode
+    ? "text-gray-600"
+    : "text-[#C4BAB0]"
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className={`${modalBg} rounded-2xl shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto`}>
+      <div
+        className={`${modalBg} rounded-2xl shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto`}
+      >
         <div className="flex items-center justify-between mb-5">
-          <h2 className={`text-lg font-bold ${titleColor}`}>{existingApp ? "Edit Application" : "Add Application"}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-300 text-xl">✕</button>
+          <h2 className={`text-lg font-bold ${titleColor}`}>
+            {existingApp
+              ? "Edit Application"
+              : "Add Application"}
+          </h2>
+
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-300 text-xl"
+          >
+            ✕
+          </button>
         </div>
 
         <div className="flex flex-col gap-4">
 
+          {/* Company Name */}
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Company Name *</label>
+            <label
+              className={`text-xs font-medium mb-1 block ${labelColor}`}
+            >
+              Company Name *
+            </label>
+
             <input
               name="company"
               value={form.company}
               onChange={handleChange}
               placeholder="e.g. Google"
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.company ? errorInputClass : inputClass}`}
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                errors.company
+                  ? errorInputClass
+                  : inputClass
+              }`}
             />
-            {errors.company && <p className="text-xs text-red-500 mt-1">⚠️ {errors.company}</p>}
-            <p className={`text-xs mt-1 text-right ${counterColor}`}>{form.company.length}/50</p>
+
+            {errors.company && (
+              <p className="text-xs text-red-500 mt-1">
+                ⚠️ {errors.company}
+              </p>
+            )}
+
+            <p
+              className={`text-xs mt-1 text-right ${counterColor}`}
+            >
+              {form.company.length}/50
+            </p>
           </div>
 
+          {/* First Preference */}
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>First Preference (Role) *</label>
+            <label
+              className={`text-xs font-medium mb-1 block ${labelColor}`}
+            >
+              First Preference (Role) *
+            </label>
+
             <AutocompleteInput
               name="role"
               value={form.role}
               onChange={handleChange}
               placeholder="e.g. Business Analyst"
-              inputClass={errors.role ? errorInputClass : inputClass}
+              inputClass={
+                errors.role
+                  ? errorInputClass
+                  : inputClass
+              }
               darkMode={darkMode}
               allApplications={allApplications}
             />
-            {errors.role && <p className="text-xs text-red-500 mt-1">⚠️ {errors.role}</p>}
-            <p className={`text-xs mt-1 text-right ${counterColor}`}>{form.role.length}/80</p>
+
+            {errors.role && (
+              <p className="text-xs text-red-500 mt-1">
+                ⚠️ {errors.role}
+              </p>
+            )}
+
+            <p
+              className={`text-xs mt-1 text-right ${counterColor}`}
+            >
+              {form.role.length}/80
+            </p>
           </div>
 
+          {/* Second Preference */}
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Second Preference (Role)</label>
+            <label
+              className={`text-xs font-medium mb-1 block ${labelColor}`}
+            >
+              Second Preference (Role)
+            </label>
+
             <AutocompleteInput
               name="secondPreference"
               value={form.secondPreference}
               onChange={handleChange}
               placeholder="e.g. Project Coordinator"
-              inputClass={errors.secondPreference ? errorInputClass : inputClass}
+              inputClass={
+                errors.secondPreference
+                  ? errorInputClass
+                  : inputClass
+              }
               darkMode={darkMode}
               allApplications={allApplications}
             />
-            {errors.secondPreference && <p className="text-xs text-red-500 mt-1">⚠️ {errors.secondPreference}</p>}
-            <p className={`text-xs mt-1 text-right ${counterColor}`}>{form.secondPreference.length}/80</p>
+
+            {errors.secondPreference && (
+              <p className="text-xs text-red-500 mt-1">
+                ⚠️ {errors.secondPreference}
+              </p>
+            )}
+
+            <p
+              className={`text-xs mt-1 text-right ${counterColor}`}
+            >
+              {form.secondPreference.length}/80
+            </p>
           </div>
 
+          {/* Job Type */}
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Job Type</label>
+            <label
+              className={`text-xs font-medium mb-1 block ${labelColor}`}
+            >
+              Job Type
+            </label>
+
             <select
-              value={isCustomJobType ? "Other" : form.jobType}
+              value={
+                isCustomJobType
+                  ? "Other"
+                  : form.jobType
+              }
               onChange={e => {
-                if (e.target.value === "Other") setForm(prev => ({ ...prev, jobType: "other_custom" }))
-                else setForm(prev => ({ ...prev, jobType: e.target.value }))
+                if (e.target.value === "Other") {
+                  setForm(prev => ({
+                    ...prev,
+                    jobType: "other_custom"
+                  }))
+                } else {
+                  setForm(prev => ({
+                    ...prev,
+                    jobType: e.target.value
+                  }))
+                }
               }}
               className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
             >
               <option value="">Select job type</option>
-              {JOB_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+
+              {JOB_TYPES.map(t => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+
               <option value="Other">Other</option>
             </select>
+
             {isCustomJobType && (
               <input
                 name="jobType"
-                value={form.jobType === "other_custom" ? "" : form.jobType}
+                value={
+                  form.jobType === "other_custom"
+                    ? ""
+                    : form.jobType
+                }
                 onChange={handleChange}
                 placeholder="Type job type..."
                 className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 mt-2 ${inputClass}`}
@@ -208,20 +405,34 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode, allApplicati
             )}
           </div>
 
+          {/* Work Mode */}
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Work Mode</label>
+            <label
+              className={`text-xs font-medium mb-1 block ${labelColor}`}
+            >
+              Work Mode
+            </label>
+
             <div className="flex gap-2">
               {WORK_MODES.map(mode => (
                 <button
                   key={mode}
                   type="button"
-                  onClick={() => setForm(prev => ({ ...prev, workMode: prev.workMode === mode ? "" : mode }))}
+                  onClick={() =>
+                    setForm(prev => ({
+                      ...prev,
+                      workMode:
+                        prev.workMode === mode
+                          ? ""
+                          : mode
+                    }))
+                  }
                   className={`flex-1 py-2 text-sm rounded-lg border font-medium transition ${
                     form.workMode === mode
                       ? "bg-indigo-600 text-white border-indigo-600"
                       : darkMode
-                      ? "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
-                      : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                        ? "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"
+                        : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
                   }`}
                 >
                   {mode}
@@ -230,36 +441,76 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode, allApplicati
             </div>
           </div>
 
+          {/* Status */}
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Status</label>
+            <label
+              className={`text-xs font-medium mb-1 block ${labelColor}`}
+            >
+              Status
+            </label>
+
             <select
               name="status"
               value={form.status}
               onChange={handleChange}
               className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
             >
-              {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+              {STATUSES.map(s => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
             </select>
           </div>
 
+          {/* Source */}
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Where did you find this job?</label>
+            <label
+              className={`text-xs font-medium mb-1 block ${labelColor}`}
+            >
+              Where did you find this job?
+            </label>
+
             <select
-              value={isCustomSource ? "Other" : form.source}
+              value={
+                isCustomSource
+                  ? "Other"
+                  : form.source
+              }
               onChange={e => {
-                if (e.target.value === "Other") setForm(prev => ({ ...prev, source: "other_custom" }))
-                else setForm(prev => ({ ...prev, source: e.target.value }))
+                if (e.target.value === "Other") {
+                  setForm(prev => ({
+                    ...prev,
+                    source: "other_custom"
+                  }))
+                } else {
+                  setForm(prev => ({
+                    ...prev,
+                    source: e.target.value
+                  }))
+                }
               }}
               className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${inputClass}`}
             >
               <option value="">Select source</option>
-              {SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
+
+              {SOURCES.map(s => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+
               <option value="Other">Other</option>
             </select>
+
             {isCustomSource && (
               <input
                 name="source"
-                value={form.source === "other_custom" ? "" : form.source}
+                value={
+                  form.source === "other_custom"
+                    ? ""
+                    : form.source
+                }
                 onChange={handleChange}
                 placeholder="Type where you found this job..."
                 className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 mt-2 ${inputClass}`}
@@ -268,33 +519,69 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode, allApplicati
             )}
           </div>
 
+          {/* Date Applied */}
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Date Applied</label>
+            <label
+              className={`text-xs font-medium mb-1 block ${labelColor}`}
+            >
+              Date Applied
+            </label>
+
             <input
               name="dateApplied"
               type="date"
               value={form.dateApplied}
               onChange={handleChange}
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.dateApplied ? errorInputClass : inputClass}`}
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                errors.dateApplied
+                  ? errorInputClass
+                  : inputClass
+              }`}
             />
-            {errors.dateApplied && <p className="text-xs text-red-500 mt-1">⚠️ {errors.dateApplied}</p>}
+
+            {errors.dateApplied && (
+              <p className="text-xs text-red-500 mt-1">
+                ⚠️ {errors.dateApplied}
+              </p>
+            )}
           </div>
 
+          {/* Interview Details */}
           {form.status === "Interview" && (
             <>
               <div>
-                <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Interview Date</label>
+                <label
+                  className={`text-xs font-medium mb-1 block ${labelColor}`}
+                >
+                  Interview Date
+                </label>
+
                 <input
                   name="interviewDate"
                   type="date"
                   value={form.interviewDate}
                   onChange={handleChange}
-                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.interviewDate ? errorInputClass : inputClass}`}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                    errors.interviewDate
+                      ? errorInputClass
+                      : inputClass
+                  }`}
                 />
-                {errors.interviewDate && <p className="text-xs text-red-500 mt-1">⚠️ {errors.interviewDate}</p>}
+
+                {errors.interviewDate && (
+                  <p className="text-xs text-red-500 mt-1">
+                    ⚠️ {errors.interviewDate}
+                  </p>
+                )}
               </div>
+
               <div>
-                <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Interview Time</label>
+                <label
+                  className={`text-xs font-medium mb-1 block ${labelColor}`}
+                >
+                  Interview Time
+                </label>
+
                 <input
                   name="interviewTime"
                   type="time"
@@ -306,38 +593,96 @@ function ApplicationModal({ onClose, onSave, existingApp, darkMode, allApplicati
             </>
           )}
 
+          {/* Job Link */}
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Job Link</label>
+            <label
+              className={`text-xs font-medium mb-1 block ${labelColor}`}
+            >
+              Job Link
+            </label>
+
             <input
               name="jobLink"
               value={form.jobLink}
               onChange={handleChange}
               placeholder="e.g. https://linkedin.com/jobs/..."
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${errors.jobLink ? errorInputClass : inputClass}`}
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                errors.jobLink
+                  ? errorInputClass
+                  : inputClass
+              }`}
             />
-            {errors.jobLink && <p className="text-xs text-red-500 mt-1">⚠️ {errors.jobLink}</p>}
+
+            {errors.jobLink && (
+              <p className="text-xs text-red-500 mt-1">
+                ⚠️ {errors.jobLink}
+              </p>
+            )}
           </div>
 
+          {/* Notes */}
           <div>
-            <label className={`text-xs font-medium mb-1 block ${labelColor}`}>Notes</label>
+            <label
+              className={`text-xs font-medium mb-1 block ${labelColor}`}
+            >
+              Notes
+            </label>
+
             <textarea
               name="notes"
               value={form.notes}
               onChange={handleChange}
               placeholder="Any notes about this application..."
               rows={3}
-              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none ${errors.notes ? errorInputClass : inputClass}`}
+              className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none ${
+                errors.notes
+                  ? errorInputClass
+                  : inputClass
+              }`}
             />
-            {errors.notes && <p className="text-xs text-red-500 mt-1">⚠️ {errors.notes}</p>}
-            <p className={`text-xs mt-1 text-right ${form.notes.length > 270 ? "text-red-400" : counterColor}`}>{form.notes.length}/300</p>
+
+            {errors.notes && (
+              <p className="text-xs text-red-500 mt-1">
+                ⚠️ {errors.notes}
+              </p>
+            )}
+
+            <p
+              className={`text-xs mt-1 text-right ${
+                form.notes.length > 270
+                  ? "text-red-400"
+                  : counterColor
+              }`}
+            >
+              {form.notes.length}/300
+            </p>
           </div>
 
         </div>
 
+        {/* Buttons */}
         <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className={`flex-1 border text-sm font-medium py-2 rounded-lg ${darkMode ? "border-gray-700 text-gray-400 hover:bg-gray-800" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>Cancel</button>
-          <button onClick={handleSubmit} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 rounded-lg">{existingApp ? "Save Changes" : "Add Application"}</button>
+          <button
+            onClick={onClose}
+            className={`flex-1 border text-sm font-medium py-2 rounded-lg ${
+              darkMode
+                ? "border-gray-700 text-gray-400 hover:bg-gray-800"
+                : "border-gray-200 text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={handleSubmit}
+            className="flex-1 bg-[#1C1917] hover:bg-[#2C2C2A] text-white text-sm font-medium py-2 rounded-xl"
+          >
+            {existingApp
+              ? "Save Changes"
+              : "Add Application"}
+          </button>
         </div>
+
       </div>
     </div>
   )
